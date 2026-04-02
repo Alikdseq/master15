@@ -303,6 +303,8 @@ docker compose -f docker-compose.prod.yml logs -n 200 beat
 
 Сертификат Let’s Encrypt для поддомена удобнее выпускать **на хосте** (`certbot --nginx` или webroot), потому что порт 80 уже обслуживает хостовый nginx.
 
+**Симптом:** `curl -H "Host: crm..." http://127.0.0.1/` с сервера даёт **200**, а `curl http://crm.../` с вашего ПК — **403**. Часто панель держит отдельный `listen ПУБЛИЧНЫЙ_IP:80 default_server`. Добавьте в `server` для CRM строку `listen ПУБЛИЧНЫЙ_IP:80;` (см. комментарий в `deploy/host-nginx-reverse-proxy.example.conf`) или уберите конфликт в конфиге панели.
+
 ---
 
 ## 11) Резервные копии (минимум)
