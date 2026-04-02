@@ -4,6 +4,12 @@ const ENV_API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined
 const FALLBACK_API_BASE_URL = "http://localhost:8000/api";
 const DOCKER_API_BASE_URL = "http://backend:8000/api";
 
+// Только dev + compose: переключение localhost ↔ backend при сетевой ошибке.
+// В production-сборке (npm run build) этого нельзя — в браузере `backend` не резолвится;
+// при ошибке TLS (ERR_CERT_*) axios даёт Network Error и раньше уходили на backend:8000.
+const ENABLE_DEV_API_HOST_FALLBACK =
+  import.meta.env.DEV && (!ENV_API_BASE_URL || ENV_API_BASE_URL === "auto");
+
 // If run via Docker Compose, host browser can't resolve `backend` hostname.
 // In "auto" mode we try localhost first (browser runs on host), and on network error retry once with Docker hostname.
 export const API_BASE_URL =
@@ -86,13 +92,13 @@ api.interceptors.response.use(
   async (error) => {
     const cfg = error?.config as MpAxiosRequestConfig | undefined;
     if (
+      ENABLE_DEV_API_HOST_FALLBACK &&
       cfg &&
       !cfg.__mp_retry_fallback &&
       typeof cfg.baseURL === "string" &&
       (error?.message === "Network Error" || error?.code === "ERR_NAME_NOT_RESOLVED")
     ) {
       cfg.__mp_retry_fallback = true;
-      // Switch between possible API hosts once.
       cfg.baseURL = cfg.baseURL.includes("backend:8000") ? FALLBACK_API_BASE_URL : DOCKER_API_BASE_URL;
       return api.request(cfg);
     }
