@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>Мастер Принт · Дашборд CRM</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Font Awesome 6 (free icons) -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #f0f4f8;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        padding: 24px 20px;
+        color: #1e293b;
+      }
+
+      /* импорт шрифта Inter */
+      @import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap");
+
+      .dashboard-container {
+        max-width: 1440px;
+        margin: 0 auto;
+      }
+
+      /* шапка */
+      .dashboard-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+        gap: 16px;
+      }
+      .title-section h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #1e3c5c, #2b5a8c);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .title-section p {
+        color: #4a627a;
+        font-size: 0.9rem;
+      }
+      .role-switch {
+        background: white;
+        border-radius: 60px;
+        padding: 5px;
+        display: flex;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+      }
+      .role-btn {
+        border: none;
+        background: transparent;
+        padding: 8px 20px;
+        border-radius: 40px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: 0.2s;
+        color: #475569;
+      }
+      .role-btn.active {
+        background: #2563eb;
+        color: white;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+      }
+      .refresh-btn {
+        background: white;
+        border: 1px solid #cbd5e1;
+        padding: 8px 18px;
+        border-radius: 40px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .refresh-btn:hover {
+        background: #f8fafc;
+      }
+
+      /* сетка KPI */
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+      }
+      .kpi-card {
+        background: white;
+        border-radius: 28px;
+        padding: 20px 18px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e9edf2;
+        transition: 0.2s;
+      }
+      .kpi-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #5b6e8c;
+        margin-bottom: 12px;
+      }
+      .kpi-value {
+        font-size: 2.3rem;
+        font-weight: 800;
+        color: #0f2b3d;
+        line-height: 1.2;
+      }
+      .kpi-sub {
+        font-size: 0.75rem;
+        color: #5f7f9e;
+        margin-top: 8px;
+      }
+      .warning-value {
+        color: #c2410c;
+      }
+
+      /* два графика в ряд */
+      .charts-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+      .chart-card {
+        background: white;
+        border-radius: 28px;
+        padding: 18px 16px 20px;
+        border: 1px solid #e9edf2;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+      }
+      .chart-title {
+        font-weight: 700;
+        margin-bottom: 16px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      canvas {
+        max-height: 260px;
+        width: 100%;
+      }
+
+      /* нижние блоки */
+      .bottom-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+      .info-card {
+        background: white;
+        border-radius: 28px;
+        padding: 20px;
+        border: 1px solid #e9edf2;
+      }
+      .card-header {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #eff3f8;
+      }
+      .list-item:last-child {
+        border-bottom: none;
+      }
+      .service-name {
+        font-weight: 500;
+      }
+      .service-count {
+        background: #eef2ff;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #2563eb;
+      }
+      .low-stock-warning {
+        color: #b91c1c;
+        font-weight: 600;
+      }
+      .btn-outline-sm {
+        background: transparent;
+        border: 1px solid #cbd5e1;
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .btn-outline-sm:hover {
+        background: #f1f5f9;
+      }
+      .urgent-item {
+        background: #fff7ed;
+        border-left: 4px solid #f97316;
+        margin-bottom: 12px;
+        padding: 12px;
+        border-radius: 16px;
+      }
+      .flex-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .action-buttons {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+      .quick-btn {
+        background: #f1f5f9;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 40px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .quick-btn i {
+        color: #2563eb;
+      }
+      .role-hide {
+        display: none;
+      }
+      @media (max-width: 800px) {
+        .charts-row,
+        .bottom-grid {
+          grid-template-columns: 1fr;
+        }
+        .kpi-value {
+          font-size: 1.7rem;
+        }
+      }
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        font-size: 0.75rem;
+        color: #6883a0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- шапка -->
+      <div class="dashboard-header">
+        <div class="title-section">
+          <h1>
+            <i
+              class="fas fa-print"
+              style="color: #2563eb; margin-right: 8px"
+            ></i>
+            Мастер Принт · Дашборд
+          </h1>
+          <p>Контроль заказов, склада и загрузки мастеров</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center">
+          <div class="role-switch" id="roleSwitch">
+            <button class="role-btn active" data-role="admin">
+              👑 Администратор
+            </button>
+            <button class="role-btn" data-role="manager">📋 Менеджер</button>
+            <button class="role-btn" data-role="master">🔧 Мастер</button>
+          </div>
+          <button class="refresh-btn" id="refreshBtn">
+            <i class="fas fa-sync-alt"></i> Обновить
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI карточки (динамические по ролям) -->
+      <div class="kpi-grid" id="kpiContainer"></div>
+
+      <!-- Графики (видны всем, но у мастера только график заказов? оставим оба для демо, можно скрыть, но по ТЗ мастеру нужна упрощёнка – покажем оба, но можно настроить) -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">
+            <i class="fas fa-chart-line" style="color: #2563eb"></i> Динамика
+            заказов (последние 14 дней)
+          </div>
+          <canvas id="ordersChart" width="400" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">
+            <i class="fas fa-chart-pie" style="color: #f97316"></i>
+            Распределение по статусам (текущие)
+          </div>
+          <canvas id="statusChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- нижняя сетка: топ услуг + товары ниже порога / срочные заказы -->
+      <div class="bottom-grid">
+        <!-- Топ-5 услуг -->
+        <div class="info-card">
+          <div class="card-header">
+            <span
+              ><i class="fas fa-medal" style="color: #eab308"></i> Топ‑5 услуг /
+              неисправностей</span
+            >
+            <span class="service-count">за 30 дней</span>
+          </div>
+          <div id="topServicesList"></div>
+        </div>
+        <!-- Товары, требующие заказа (админ/менеджер) + у мастера показываем список его заказов -->
+        <div class="info-card" id="rightBottomCard"></div>
+      </div>
+
+      <!-- Срочные заказы (для админа и менеджера) + активность сотрудников (админ) -->
+      <div class="info-card" style="margin-bottom: 32px" id="urgentBlock"></div>
+
+      <!-- Быстрые действия (ролевые) -->
+      <div class="action-buttons" id="quickActions"></div>
+
+      <footer>
+        Данные обновлены: сегодня, 11:45 · * демонстрационные метрики
+      </footer>
+    </div>
+
+    <script>
+      // ---------- Демо-данные для ролей ----------
+      const demoData = {
+        // KPI для админа
+        adminKPI: [
+          { title: "Заказов сегодня", value: "14", sub: "+2 против вчера" },
+          { title: "Заказов за неделю", value: "87", sub: "⬆ на 12%" },
+          {
+            title: "Заказов за месяц",
+            value: "312",
+            sub: "средний чек 3 250₽",
+          },
+          { title: "Выручка за месяц", value: "1 014 000 ₽", sub: "маржа 38%" },
+          {
+            title: "Ср. время выполнения",
+            value: "3.2 дня",
+            sub: "цель < 3 дней",
+          },
+          {
+            title: "Товаров ниже минимума",
+            value: "4",
+            sub: "требуют заказа",
+            warning: true,
+          },
+        ],
+        // KPI менеджера
+        managerKPI: [
+          {
+            title: "Новые заказы сегодня",
+            value: "8",
+            sub: "ожидают обработки",
+          },
+          { title: "Ожидают согласования", value: "5", sub: "нужен звонок" },
+          { title: "Готовы к выдаче", value: "12", sub: "ждут клиента" },
+          {
+            title: "Товаров ниже порога",
+            value: "4",
+            sub: "уведомить закупщика",
+            warning: true,
+          },
+        ],
+        // KPI мастера
+        masterKPI: [
+          { title: "В работе сейчас", value: "6", sub: "заказов на мне" },
+          { title: "Ожидание запчастей", value: "3", sub: "по моим заказам" },
+          {
+            title: "Завершено за неделю",
+            value: "18",
+            sub: "средний срок 2.8 дн.",
+          },
+        ],
+        topServices: [
+          { name: "Не печатает / сбои печати", count: 45 },
+          { name: "Заправка картриджа", count: 32 },
+          { name: "Шум / скрежет", count: 18 },
+          { name: "Не включается", count: 12 },
+          { name: "Плохое качество печати", count: 8 },
+        ],
+        lowStock: [
+          { name: "Картридж HP 85A", sku: "HP-85A", stock: 2, min: 5 },
+          { name: "Бумага А4 (5 пачек)", sku: "A4-500", stock: 1, min: 3 },
+          { name: "Ролик захвата HP", sku: "ROL-102", stock: 0, min: 2 },
+          { name: "Тонер Samsung 1610", sku: "TON-1610", stock: 3, min: 4 },
+        ],
+        urgentOrders: [
+          {
+            id: "2403-0012",
+            client: "Иванов П.",
+            device: "Принтер HP",
+            status: "Ожидание запчастей",
+            days: 8,
+          },
+          {
+            id: "2403-0007",
+            client: "Петрова А.",
+            device: "Ноутбук Lenovo",
+            status: "Согласование",
+            days: 4,
+          },
+          {
+            id: "2402-0982",
+            client: "Смирнов К.",
+            device: "МФУ Canon",
+            status: "Ожидание запчастей",
+            days: 10,
+          },
+        ],
+        masterOrders: [
+          {
+            id: "2403-0015",
+            client: "Кузнецов",
+            device: "HP LaserJet",
+            status: "В ремонте",
+          },
+          {
+            id: "2403-0010",
+            client: "Сергеева",
+            device: "Samsung SCX",
+            status: "В ремонте",
+          },
+          {
+            id: "2403-0005",
+            client: "Васильев",
+            device: "Canon MF3010",
+            status: "Ожидание запчастей",
+          },
+        ],
+        staffActivity: [
+          { name: "Антонов М.", completed: 12, avgDays: 2.4 },
+          { name: "Кузнецов Д.", completed: 9, avgDays: 3.1 },
+          { name: "Смирнова Е.", completed: 7, avgDays: 2.7 },
+        ],
+      };
+
+      let currentRole = "admin"; // admin, manager, master
+
+      // элементы
+      const kpiContainer = document.getElementById("kpiContainer");
+      const topServicesList = document.getElementById("topServicesList");
+      const rightBottomCard = document.getElementById("rightBottomCard");
+      const urgentBlock = document.getElementById("urgentBlock");
+      const quickActionsDiv = document.getElementById("quickActions");
+
+      // графики (инициализация)
+      let ordersChart, statusChart;
+
+      function initCharts() {
+        const ctxOrders = document
+          .getElementById("ordersChart")
+          .getContext("2d");
+        const ctxStatus = document
+          .getElementById("statusChart")
+          .getContext("2d");
+        if (ordersChart) ordersChart.destroy();
+        if (statusChart) statusChart.destroy();
+        ordersChart = new Chart(ctxOrders, {
+          type: "line",
+          data: {
+            labels: [
+              "01.03",
+              "02.03",
+              "03.03",
+              "04.03",
+              "05.03",
+              "06.03",
+              "07.03",
+              "08.03",
+              "09.03",
+              "10.03",
+              "11.03",
+              "12.03",
+              "13.03",
+              "14.03",
+            ],
+            datasets: [
+              {
+                label: "Заказы",
+                data: [12, 15, 18, 22, 27, 24, 19, 23, 28, 31, 29, 34, 38, 42],
+                borderColor: "#2563eb",
+                backgroundColor: "rgba(37,99,235,0.05)",
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: "#2563eb",
+              },
+            ],
+          },
+          options: { responsive: true, maintainAspectRatio: true },
+        });
+        statusChart = new Chart(ctxStatus, {
+          type: "pie",
+          data: {
+            labels: [
+              "Принят",
+              "Диагностика",
+              "Согласование",
+              "Ожидание запчастей",
+              "В ремонте",
+              "Готов",
+              "Выдан",
+            ],
+            datasets: [
+              {
+                data: [18, 12, 8, 14, 22, 19, 7],
+                backgroundColor: [
+                  "#3b82f6",
+                  "#8b5cf6",
+                  "#f59e0b",
+                  "#f97316",
+                  "#ec4899",
+                  "#10b981",
+                  "#6b7280",
+                ],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom" } },
+          },
+        });
+      }
+
+      function renderKPI() {
+        let kpis = [];
+        if (currentRole === "admin") kpis = demoData.adminKPI;
+        else if (currentRole === "manager") kpis = demoData.managerKPI;
+        else kpis = demoData.masterKPI;
+
+        kpiContainer.innerHTML = kpis
+          .map(
+            (k) => `
+            <div class="kpi-card">
+                <div class="kpi-title">${k.title}</div>
+                <div class="kpi-value ${k.warning ? "warning-value" : ""}">${k.value}</div>
+                <div class="kpi-sub">${k.sub}</div>
+            </div>
+        `,
+          )
+          .join("");
+      }
+
+      function renderTopServices() {
+        topServicesList.innerHTML = demoData.topServices
+          .map(
+            (s) => `
+            <div class="list-item">
+                <span class="service-name">${s.name}</span>
+                <span class="service-count">${s.count} заказов</span>
+            </div>
+        `,
+          )
+          .join("");
+      }
+
+      function renderRightBottomCard() {
+        if (currentRole === "master") {
+          // список назначенных заказов мастера
+          rightBottomCard.innerHTML = `
+                <div class="card-header"><span><i class="fas fa-tasks"></i> Мои заказы</span><span>в работе</span></div>
+                ${demoData.masterOrders
+                  .map(
+                    (o) => `
+                    <div class="list-item">
+                        <div><strong>${o.id}</strong> — ${o.client}<br><small>${o.device}</small></div>
+                        <span class="service-count" style="background:#ffe4e6; color:#b91c1c;">${o.status}</span>
+                    </div>
+                `,
+                  )
+                  .join("")}
+                <div class="flex-between" style="margin-top: 12px;">
+                    <span></span>
+                    <button class="btn-outline-sm"><i class="fas fa-check-circle"></i> Изменить статус</button>
+                </div>
+            `;
+        } else {
+          // админ/менеджер видят товары ниже порога
+          rightBottomCard.innerHTML = `
+                <div class="card-header"><span><i class="fas fa-boxes"></i> Товары ниже порога</span><span>⚠️ срочно заказать</span></div>
+                ${demoData.lowStock
+                  .map(
+                    (p) => `
+                    <div class="list-item">
+                        <div><strong>${p.name}</strong><br><span style="font-size:0.75rem;">арт. ${p.sku}</span></div>
+                        <div><span class="low-stock-warning">остаток ${p.stock} / min ${p.min}</span></div>
+                    </div>
+                `,
+                  )
+                  .join("")}
+                <div style="margin-top: 16px;"><button class="btn-outline-sm"><i class="fas fa-arrow-right"></i> Перейти на склад</button></div>
+            `;
+        }
+      }
+
+      function renderUrgentAndActivity() {
+        if (currentRole === "admin") {
+          // срочные заказы + активность сотрудников
+          urgentBlock.innerHTML = `
+                <div class="card-header"><span><i class="fas fa-exclamation-triangle" style="color:#f97316"></i> Срочные заказы</span><span>требуют внимания</span></div>
+                ${demoData.urgentOrders
+                  .map(
+                    (u) => `
+                    <div class="urgent-item">
+                        <div class="flex-between">
+                            <div><strong>${u.id}</strong> — ${u.client} (${u.device})</div>
+                            <span class="service-count" style="background:#ffedd5;">${u.status} ${u.days} дн.</span>
+                        </div>
+                        <div style="margin-top: 8px; display: flex; gap: 12px;">
+                            <button class="btn-outline-sm"><i class="fas fa-wrench"></i> Взять в работу</button>
+                            <button class="btn-outline-sm"><i class="fas fa-phone"></i> Связаться</button>
+                        </div>
+                    </div>
+                `,
+                  )
+                  .join("")}
+                <div class="card-header" style="margin-top: 24px;"><span><i class="fas fa-users"></i> Активность мастеров (за неделю)</span></div>
+                ${demoData.staffActivity
+                  .map(
+                    (m) => `
+                    <div class="list-item">
+                        <span>🧑‍🔧 ${m.name}</span>
+                        <span>✅ ${m.completed} заказов · сред. ${m.avgDays} дн.</span>
+                    </div>
+                `,
+                  )
+                  .join("")}
+            `;
+        } else if (currentRole === "manager") {
+          urgentBlock.innerHTML = `
+                <div class="card-header"><span><i class="fas fa-bell"></i> Заказы, требующие согласования</span></div>
+                ${demoData.urgentOrders
+                  .slice(0, 2)
+                  .map(
+                    (u) => `
+                    <div class="urgent-item">
+                        <div><strong>${u.id}</strong> — ${u.client} (${u.device}) · статус ${u.status}</div>
+                        <div style="margin-top: 8px;"><button class="btn-outline-sm"><i class="fas fa-phone"></i> Позвонить клиенту</button></div>
+                    </div>
+                `,
+                  )
+                  .join("")}
+                <div class="card-header" style="margin-top: 20px;"><span>📦 Заказы готовые к выдаче</span></div>
+                <div class="list-item">№2403-0018 · Клиент: Орлова · Принтер Canon</div>
+                <div class="list-item">№2403-0011 · Клиент: Трофимов · МФУ HP</div>
+            `;
+        } else {
+          // мастер
+          urgentBlock.innerHTML = `
+                <div class="card-header"><span><i class="fas fa-tachometer-alt"></i> Моя загрузка</span><span>сегодня</span></div>
+                <div class="list-item"><span>Активных заказов</span><span class="service-count">6</span></div>
+                <div class="list-item"><span>Ожидают запчасти</span><span class="service-count">2</span></div>
+                <div class="list-item"><span>Среднее время ремонта</span><span>2.4 дня</span></div>
+                <button class="btn-outline-sm" style="margin-top: 12px;"><i class="fas fa-clipboard-list"></i> Перейти к моим заказам</button>
+            `;
+        }
+      }
+
+      function renderQuickActions() {
+        let btns = [];
+        if (currentRole === "admin") {
+          btns = [
+            { icon: "plus-circle", text: "Новый заказ", action: "createOrder" },
+            { icon: "truck", text: "Поступление товара", action: "stockIn" },
+            { icon: "file-alt", text: "Сформировать отчёт", action: "report" },
+          ];
+        } else if (currentRole === "manager") {
+          btns = [
+            { icon: "plus-circle", text: "Новый заказ", action: "createOrder" },
+            { icon: "phone-alt", text: "Связаться с клиентом", action: "call" },
+            { icon: "file-export", text: "Отчёты", action: "report" },
+          ];
+        } else {
+          btns = [
+            {
+              icon: "wrench",
+              text: "Изменить статус заказа",
+              action: "changeStatus",
+            },
+            { icon: "cubes", text: "Списать материалы", action: "writeOff" },
+          ];
+        }
+        quickActionsDiv.innerHTML = btns
+          .map(
+            (b) => `
+            <button class="quick-btn" data-action="${b.action}">
+                <i class="fas fa-${b.icon}"></i> ${b.text}
+            </button>
+        `,
+          )
+          .join("");
+        // добавим обработчики (для демо)
+        document.querySelectorAll(".quick-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            alert(
+              `Демо-режим: действие "${btn.innerText}" будет доступно в полной версии.`,
+            );
+          });
+        });
+      }
+
+      function refreshAll() {
+        renderKPI();
+        renderTopServices();
+        renderRightBottomCard();
+        renderUrgentAndActivity();
+        renderQuickActions();
+        // графики не пересоздаём, но можно обновить данные (для демо оставим)
+      }
+
+      // переключение ролей
+      function setRole(role) {
+        currentRole = role;
+        document.querySelectorAll(".role-btn").forEach((btn) => {
+          if (btn.dataset.role === role) btn.classList.add("active");
+          else btn.classList.remove("active");
+        });
+        refreshAll();
+      }
+
+      // инициализация
+      function init() {
+        initCharts();
+        setRole("admin");
+        document.querySelectorAll(".role-btn").forEach((btn) => {
+          btn.addEventListener("click", () => setRole(btn.dataset.role));
+        });
+        document.getElementById("refreshBtn").addEventListener("click", () => {
+          alert("Данные обновлены (демо-версия)");
+          refreshAll();
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>

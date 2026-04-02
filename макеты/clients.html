@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мастер Принт · База клиентов</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body class="max-w-6xl mx-auto p-6 bg-gray-50">
+    <div class="flex items-center gap-3 mb-8">
+      <i class="fas fa-users text-indigo-600 text-3xl"></i>
+      <h1 class="text-3xl font-bold">База клиентов и повторные продажи</h1>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="md:col-span-2 bg-white rounded-3xl p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold">
+            Все клиенты
+            <span class="text-gray-500 text-sm ml-2">156 контактов</span>
+          </h2>
+          <button
+            onclick="addClient()"
+            class="btn bg-blue-600 text-white px-4 py-2 rounded-xl"
+          >
+            + Добавить
+          </button>
+        </div>
+        <div id="clientsList" class="space-y-3">
+          <!-- через JS -->
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6">
+        <h2 class="text-xl font-bold mb-4">Сегменты</h2>
+        <div class="space-y-3">
+          <div class="p-3 bg-gray-100 rounded-xl flex justify-between">
+            <span>🖨️ Ремонт принтеров</span>
+            <span class="bg-blue-500 text-white px-2 rounded-full">89</span>
+          </div>
+          <div class="p-3 bg-gray-100 rounded-xl flex justify-between">
+            <span>📄 Ксерокопии</span>
+            <span class="bg-blue-500 text-white px-2 rounded-full">42</span>
+          </div>
+          <div class="p-3 bg-gray-100 rounded-xl flex justify-between">
+            <span>🖨️ Заправка картриджей</span>
+            <span class="bg-blue-500 text-white px-2 rounded-full">67</span>
+          </div>
+        </div>
+        <button
+          class="w-full mt-6 bg-green-600 text-white py-3 rounded-xl font-bold"
+        >
+          Сделать рассылку
+        </button>
+        <p class="text-xs text-gray-500 mt-2">* демо-режим</p>
+      </div>
+    </div>
+
+    <script>
+      let clients = [
+        {
+          name: "Иванов Петр",
+          phone: "+7 918 123-45-67",
+          service: "ремонт HP",
+        },
+        {
+          name: "Сидорова Анна",
+          phone: "+7 928 987-65-43",
+          service: "ксерокопии",
+        },
+        {
+          name: 'ООО "Ромашка"',
+          phone: "+7 903 111-22-33",
+          service: "картриджи",
+        },
+      ];
+
+      function renderClients() {
+        const list = document.getElementById("clientsList");
+        list.innerHTML = clients
+          .map(
+            (c) => `
+                <div class="flex justify-between items-center border-b pb-3">
+                    <div>
+                        <p class="font-medium">${c.name}</p>
+                        <p class="text-sm text-gray-500">${c.phone} · ${c.service}</p>
+                    </div>
+                    <button class="text-red-500 text-sm" onclick="deleteClient('${c.phone}')"><i class="far fa-trash-alt"></i></button>
+                </div>
+            `,
+          )
+          .join("");
+      }
+
+      function addClient() {
+        clients.push({
+          name: "Новый клиент",
+          phone: "+7 999 888-77-66",
+          service: "тест",
+        });
+        renderClients();
+      }
+
+      function deleteClient(phone) {
+        clients = clients.filter((c) => c.phone !== phone);
+        renderClients();
+      }
+
+      renderClients();
+    </script>
+  </body>
+</html>

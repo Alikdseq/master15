@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>Мастер Принт · Администрирование</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      body {
+        background: #f0f4f8;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      .tab-active {
+        border-bottom: 2px solid #2563eb;
+        color: #2563eb;
+      }
+      .card-settings {
+        transition: all 0.2s;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 30px;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+      .status-active {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .status-inactive {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      @media (max-width: 768px) {
+        .admin-table th,
+        .admin-table td {
+          padding: 8px 6px;
+          font-size: 0.75rem;
+        }
+        .tab-btn {
+          padding: 0.75rem 0.75rem;
+          font-size: 0.8rem;
+        }
+      }
+    </style>
+  </head>
+  <body class="p-5 md:p-8">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+          <i class="fas fa-cog text-blue-600 mr-3"></i>Администрирование
+        </h1>
+        <div
+          class="text-sm bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200"
+        >
+          <i class="fas fa-shield-alt text-green-600 mr-1"></i> Только для
+          администратора
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 overflow-x-auto"
+      >
+        <div class="flex border-b min-w-max">
+          <button
+            class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="users"
+          >
+            👥 Пользователи
+          </button>
+          <button
+            class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="settings"
+          >
+            ⚙️ Настройки системы
+          </button>
+          <button
+            class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="templates"
+          >
+            📝 Шаблоны уведомлений
+          </button>
+          <button
+            class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="statuses"
+          >
+            🔄 Статусы заказов
+          </button>
+          <button
+            class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="stock"
+          >
+            📦 Пороги и склад
+          </button>
+          <button
+            class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="backup"
+          >
+            💾 Резервное копирование
+          </button>
+          <button
+            class="tab-btn px-5 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="logs"
+          >
+            📋 Логирование
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Contents -->
+      <div id="usersTab" class="tab-content">
+        <!-- dynamic -->
+      </div>
+      <div id="settingsTab" class="tab-content hidden"></div>
+      <div id="templatesTab" class="tab-content hidden"></div>
+      <div id="statusesTab" class="tab-content hidden"></div>
+      <div id="stockTab" class="tab-content hidden"></div>
+      <div id="backupTab" class="tab-content hidden"></div>
+      <div id="logsTab" class="tab-content hidden"></div>
+    </div>
+
+    <script>
+      // Mock data
+      let users = [
+        {
+          id: 1,
+          name: "Анна Петрова",
+          email: "anna@masterprint.ru",
+          role: "admin",
+          phone: "+7 918 123-45-67",
+          lastLogin: "20.03.2026",
+          active: true,
+        },
+        {
+          id: 2,
+          name: "Иван Сидоров",
+          email: "ivan@masterprint.ru",
+          role: "master",
+          phone: "+7 989 456-78-90",
+          lastLogin: "19.03.2026",
+          active: true,
+        },
+        {
+          id: 3,
+          name: "Мария Кузнецова",
+          email: "maria@masterprint.ru",
+          role: "manager",
+          phone: "+7 903 111-22-33",
+          lastLogin: "18.03.2026",
+          active: true,
+        },
+        {
+          id: 4,
+          name: "Дмитрий Васильев",
+          email: "dmitry@masterprint.ru",
+          role: "master",
+          phone: "+7 961 444-55-66",
+          lastLogin: "17.03.2026",
+          active: false,
+        },
+      ];
+
+      const roleLabels = {
+        admin: "Администратор",
+        manager: "Менеджер",
+        master: "Мастер",
+      };
+
+      let templates = [
+        {
+          id: 1,
+          event: "Заказ принят",
+          text: "Здравствуйте, {client_name}! Ваш заказ {order_number} (устройство {device}) принят. Следите за статусом в личном кабинете.",
+        },
+        {
+          id: 2,
+          event: "Статус изменён на «Готов»",
+          text: "Здравствуйте, {client_name}! Ваш {device} отремонтирован и ждёт вас в {company_name} по адресу {address}. Режим работы: {work_hours}. Ждём!",
+        },
+        {
+          id: 3,
+          event: "Напоминание о профилактике",
+          text: "Напоминаем, что вашему {device} пора на профилактику. Скидка 10% на заправку картриджа в этом месяце!",
+        },
+      ];
+
+      let statuses = [
+        {
+          id: 1,
+          name: "Принят",
+          code: "accepted",
+          color: "#3b82f6",
+          order: 1,
+          visible: true,
+        },
+        {
+          id: 2,
+          name: "Диагностика",
+          code: "diagnostics",
+          color: "#8b5cf6",
+          order: 2,
+          visible: true,
+        },
+        {
+          id: 3,
+          name: "Согласование",
+          code: "negotiation",
+          color: "#f59e0b",
+          order: 3,
+          visible: true,
+        },
+        {
+          id: 4,
+          name: "Ожидание запчастей",
+          code: "waiting_parts",
+          color: "#f97316",
+          order: 4,
+          visible: true,
+        },
+        {
+          id: 5,
+          name: "В ремонте",
+          code: "repair",
+          color: "#ec4899",
+          order: 5,
+          visible: true,
+        },
+        {
+          id: 6,
+          name: "Готов",
+          code: "ready",
+          color: "#10b981",
+          order: 6,
+          visible: true,
+        },
+        {
+          id: 7,
+          name: "Выдан",
+          code: "completed",
+          color: "#6b7280",
+          order: 7,
+          visible: true,
+        },
+      ];
+
+      let logs = [
+        {
+          date: "21.03.2026 09:34",
+          user: "Анна Петрова",
+          action: "Создал пользователя Иван Сидоров",
+          entity: "Пользователи",
+          changes: "роль: мастер",
+        },
+        {
+          date: "20.03.2026 14:22",
+          user: "Анна Петрова",
+          action: "Изменил статус заказа №2403-0012 на «Готов»",
+          entity: "Заказы",
+          changes: "статус: готов",
+        },
+        {
+          date: "19.03.2026 11:05",
+          user: "Иван Сидоров",
+          action: "Добавил материал в заказ №2403-0015",
+          entity: "Заказы",
+          changes: "картридж HP 85A",
+        },
+        {
+          date: "18.03.2026 16:30",
+          user: "Система",
+          action: "Автоматическое резервное копирование",
+          entity: "Система",
+          changes: "размер: 24 МБ",
+        },
+      ];
+
+      let activeTab = "users";
+
+      function renderUsersTab() {
+        const container = document.getElementById("usersTab");
+        const html = `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                    <button id="addUserBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-medium"><i class="fas fa-plus mr-1"></i> Добавить пользователя</button>
+                    <div class="flex gap-2">
+                        <select id="roleFilter" class="border rounded-xl px-3 py-1 text-sm"><option value="all">Все роли</option><option value="admin">Администратор</option><option value="manager">Менеджер</option><option value="master">Мастер</option></select>
+                        <input type="text" id="userSearch" placeholder="Поиск..." class="border rounded-xl px-3 py-1 text-sm w-40">
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm admin-table">
+                        <thead class="bg-gray-50"><tr><th class="p-3 text-left">Имя</th><th class="p-3 text-left">Email</th><th class="p-3 text-left">Роль</th><th class="p-3 text-left">Телефон</th><th class="p-3 text-left">Последний вход</th><th class="p-3 text-left">Статус</th><th class="p-3 text-center">Действия</th></tr></thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        container.innerHTML = html;
+        renderUsersTable();
+        document
+          .getElementById("addUserBtn")
+          .addEventListener("click", () =>
+            alert("Демо: открыть форму добавления пользователя"),
+          );
+        document
+          .getElementById("roleFilter")
+          .addEventListener("change", () => renderUsersTable());
+        document
+          .getElementById("userSearch")
+          .addEventListener("input", () => renderUsersTable());
+      }
+
+      function renderUsersTable() {
+        const roleFilter =
+          document.getElementById("roleFilter")?.value || "all";
+        const search =
+          document.getElementById("userSearch")?.value.toLowerCase() || "";
+        let filtered = users.filter(
+          (u) =>
+            (roleFilter === "all" || u.role === roleFilter) &&
+            (u.name.toLowerCase().includes(search) ||
+              u.email.toLowerCase().includes(search)),
+        );
+        const tbody = document.getElementById("usersTableBody");
+        tbody.innerHTML = filtered
+          .map(
+            (u) => `
+            <tr class="border-b">
+                <td class="p-3">${u.name}</td>
+                <td class="p-3">${u.email}</td>
+                <td class="p-3">${roleLabels[u.role]}</td>
+                <td class="p-3">${u.phone || "—"}</td>
+                <td class="p-3">${u.lastLogin}</td>
+                <td class="p-3"><span class="status-badge ${u.active ? "status-active" : "status-inactive"}">${u.active ? "Активен" : "Заблокирован"}</span></td>
+                <td class="p-3 text-center">
+                    <button class="text-blue-600 hover:text-blue-800 mr-2 edit-user" data-id="${u.id}"><i class="fas fa-edit"></i></button>
+                    <button class="text-gray-600 hover:text-gray-800 reset-pwd" data-id="${u.id}"><i class="fas fa-key"></i></button>
+                    <button class="text-red-600 hover:text-red-800 toggle-active" data-id="${u.id}"><i class="fas ${u.active ? "fa-ban" : "fa-check-circle"}"></i></button>
+                </td>
+            </tr>
+        `,
+          )
+          .join("");
+        document
+          .querySelectorAll(".edit-user")
+          .forEach((btn) =>
+            btn.addEventListener("click", () =>
+              alert("Демо: редактирование пользователя"),
+            ),
+          );
+        document
+          .querySelectorAll(".reset-pwd")
+          .forEach((btn) =>
+            btn.addEventListener("click", () =>
+              alert("Демо: сброс пароля отправлен на email"),
+            ),
+          );
+        document.querySelectorAll(".toggle-active").forEach((btn) =>
+          btn.addEventListener("click", (e) => {
+            const id = parseInt(btn.dataset.id);
+            const user = users.find((u) => u.id === id);
+            if (user) {
+              user.active = !user.active;
+              renderUsersTable();
+              alert(
+                `Пользователь ${user.name} ${user.active ? "активирован" : "заблокирован"}`,
+              );
+            }
+          }),
+        );
+      }
+
+      function renderSettingsTab() {
+        const container = document.getElementById("settingsTab");
+        container.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-bold mb-4">Основные настройки</h3>
+                <div class="grid md:grid-cols-2 gap-5">
+                    <div><label class="block text-sm font-medium mb-1">Название компании</label><input type="text" class="w-full border rounded-xl px-3 py-2" value="Мастер Принт"></div>
+                    <div><label class="block text-sm font-medium mb-1">Контактный телефон</label><input type="text" class="w-full border rounded-xl px-3 py-2" value="+7 (495) 123-45-67"></div>
+                    <div class="col-span-2"><label class="block text-sm font-medium mb-1">Адрес сервисного центра</label><input type="text" class="w-full border rounded-xl px-3 py-2" value="г. Москва, ул. Кесаева, 18"></div>
+                    <div><label class="block text-sm font-medium mb-1">Рабочее время</label><input type="text" class="w-full border rounded-xl px-3 py-2" value="пн-пт 9:00–19:00, сб 10:00–16:00"></div>
+                    <div><label class="block text-sm font-medium mb-1">Формат номера заказа</label><input type="text" class="w-full border rounded-xl px-3 py-2" value="MMDD-XXXX"></div>
+                    <div><label class="block text-sm font-medium mb-1">Дней до напоминания о профилактике</label><input type="number" class="w-full border rounded-xl px-3 py-2" value="180"></div>
+                </div>
+                <div class="mt-6 border-t pt-4"><h3 class="text-lg font-bold mb-3">Настройки уведомлений</h3><label class="flex items-center gap-2"><input type="checkbox" checked> Включить SMS-уведомления</label></div>
+                <div class="mt-4"><button id="saveSettingsBtn" class="bg-blue-600 text-white px-6 py-2 rounded-full">Сохранить изменения</button></div>
+            </div>
+        `;
+        document
+          .getElementById("saveSettingsBtn")
+          .addEventListener("click", () => alert("Настройки сохранены (демо)"));
+      }
+
+      function renderTemplatesTab() {
+        const container = document.getElementById("templatesTab");
+        container.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-bold mb-4">Шаблоны SMS-уведомлений</h3>
+                <div class="space-y-5">${templates
+                  .map(
+                    (t) => `
+                    <div class="border rounded-xl p-4">
+                        <div class="font-bold mb-2">${t.event}</div>
+                        <textarea rows="3" class="w-full border rounded-xl p-2 text-sm" data-id="${t.id}">${t.text}</textarea>
+                        <div class="text-xs text-gray-500 mt-1">Плейсхолдеры: {client_name}, {order_number}, {device}, {company_name}, {address}, {work_hours}</div>
+                    </div>
+                `,
+                  )
+                  .join("")}</div>
+                <div class="mt-5"><button id="saveTemplatesBtn" class="bg-blue-600 text-white px-6 py-2 rounded-full">Сохранить шаблоны</button></div>
+            </div>
+        `;
+        document
+          .getElementById("saveTemplatesBtn")
+          .addEventListener("click", () => alert("Шаблоны сохранены (демо)"));
+      }
+
+      function renderStatusesTab() {
+        const container = document.getElementById("statusesTab");
+        container.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div class="flex justify-between mb-4"><h3 class="text-lg font-bold">Статусы заказов</h3><button id="addStatusBtn" class="bg-blue-600 text-white px-4 py-1 rounded-full text-sm">+ Добавить статус</button></div>
+                <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th>Название</th><th>Код</th><th>Цвет</th><th>Порядок</th><th>Видим клиенту</th><th></th></tr></thead><tbody id="statusesTableBody"></tbody></table></div>
+                <div class="mt-6"><h3 class="font-bold mb-2">Правила переходов</h3><button id="editTransitionsBtn" class="bg-gray-100 px-4 py-2 rounded-full text-sm">Редактировать переходы</button></div>
+            </div>
+        `;
+        function renderStatusTable() {
+          const tbody = document.getElementById("statusesTableBody");
+          tbody.innerHTML = statuses
+            .map(
+              (s) => `
+                <tr class="border-b"><td class="p-2">${s.name}</td><td class="p-2">${s.code}</td><td class="p-2"><span style="background:${s.color}" class="inline-block w-6 h-6 rounded-full align-middle"></span> ${s.color}</td><td class="p-2">${s.order}</td><td class="p-2">${s.visible ? "Да" : "Нет"}</td><td class="p-2"><button class="text-blue-600 edit-status" data-id="${s.id}"><i class="fas fa-edit"></i></button></td></tr>
+            `,
+            )
+            .join("");
+          document
+            .querySelectorAll(".edit-status")
+            .forEach((btn) =>
+              btn.addEventListener("click", () =>
+                alert("Демо: редактирование статуса"),
+              ),
+            );
+        }
+        renderStatusTable();
+        document
+          .getElementById("addStatusBtn")
+          .addEventListener("click", () =>
+            alert("Демо: добавление нового статуса"),
+          );
+        document
+          .getElementById("editTransitionsBtn")
+          .addEventListener("click", () =>
+            alert("Демо: редактирование правил переходов"),
+          );
+      }
+
+      function renderStockTab() {
+        const container = document.getElementById("stockTab");
+        container.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-bold mb-3">Пороги минимальных остатков</h3>
+                <div><label class="block text-sm font-medium">Глобальный порог (по умолчанию)</label><input type="number" class="border rounded-xl px-3 py-2 w-32" value="3"></div>
+                <div class="mt-4"><label class="block text-sm font-medium">Категорийные пороги</label><div class="space-y-2"><div class="flex gap-2"><span class="w-32">Картриджи</span><input type="number" value="5" class="border rounded-xl px-2 py-1 w-24"></div><div class="flex gap-2"><span class="w-32">Тонер</span><input type="number" value="3" class="border rounded-xl px-2 py-1 w-24"></div><div class="flex gap-2"><span class="w-32">Бумага</span><input type="number" value="2" class="border rounded-xl px-2 py-1 w-24"></div></div></div>
+                <div class="mt-6 border-t pt-4"><label class="flex items-center gap-2"><input type="checkbox" checked> Включить учёт закупочных цен</label><label class="flex items-center gap-2 mt-2"><input type="checkbox" checked> Создавать уведомление при остатке ниже порога</label></div>
+                <div class="mt-5"><button id="saveStockSettingsBtn" class="bg-blue-600 text-white px-6 py-2 rounded-full">Сохранить настройки</button></div>
+            </div>
+        `;
+        document
+          .getElementById("saveStockSettingsBtn")
+          .addEventListener("click", () =>
+            alert("Настройки склада сохранены (демо)"),
+          );
+      }
+
+      function renderBackupTab() {
+        const container = document.getElementById("backupTab");
+        container.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-bold mb-4">Резервное копирование</h3>
+                <div class="flex gap-4 flex-wrap"><button id="manualBackupBtn" class="bg-green-600 text-white px-5 py-2 rounded-full"><i class="fas fa-database"></i> Создать бэкап сейчас</button><button id="restoreBtn" class="bg-orange-600 text-white px-5 py-2 rounded-full"><i class="fas fa-upload"></i> Восстановить из бэкапа</button></div>
+                <div class="mt-6"><label class="flex items-center gap-2"><input type="checkbox" checked> Автоматическое резервное копирование</label><div class="grid grid-cols-2 gap-3 mt-2"><select class="border rounded-xl p-2"><option>Ежедневно</option><option>Еженедельно</option></select><input type="time" value="03:00" class="border rounded-xl p-2"></div><div class="mt-2"><label>Хранить копий:</label><input type="number" value="7" class="border rounded-xl p-2 w-20 ml-2"></div></div>
+                <div class="mt-5"><button id="saveBackupSettingsBtn" class="bg-blue-600 text-white px-6 py-2 rounded-full">Сохранить настройки</button></div>
+            </div>
+        `;
+        document
+          .getElementById("manualBackupBtn")
+          .addEventListener("click", () =>
+            alert("Создание бэкапа запущено (демо)"),
+          );
+        document
+          .getElementById("restoreBtn")
+          .addEventListener("click", () =>
+            alert("Восстановление из бэкапа (демо)"),
+          );
+        document
+          .getElementById("saveBackupSettingsBtn")
+          .addEventListener("click", () =>
+            alert("Настройки бэкапов сохранены"),
+          );
+      }
+
+      function renderLogsTab() {
+        const container = document.getElementById("logsTab");
+        container.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <input type="date" id="logDateFrom" class="border rounded-xl px-3 py-1 text-sm"> — <input type="date" id="logDateTo" class="border rounded-xl px-3 py-1 text-sm">
+                    <select id="logUserFilter" class="border rounded-xl px-3 py-1 text-sm"><option value="all">Все пользователи</option><option>Анна Петрова</option><option>Иван Сидоров</option></select>
+                    <button id="applyLogFilters" class="bg-gray-200 px-4 py-1 rounded-xl text-sm">Применить</button>
+                    <button id="exportLogsBtn" class="bg-blue-600 text-white px-4 py-1 rounded-xl text-sm"><i class="fas fa-download"></i> Экспорт XLSX</button>
+                </div>
+                <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th>Дата</th><th>Пользователь</th><th>Действие</th><th>Сущность</th><th>Изменения</th></tr></thead><tbody id="logsTableBody"></tbody></table></div>
+            </div>
+        `;
+        function renderLogs() {
+          const tbody = document.getElementById("logsTableBody");
+          tbody.innerHTML = logs
+            .map(
+              (l) =>
+                `<tr class="border-b"><td class="p-2">${l.date}</td><td class="p-2">${l.user}</td><td class="p-2">${l.action}</td><td class="p-2">${l.entity}</td><td class="p-2">${l.changes}</td></tr>`,
+            )
+            .join("");
+        }
+        renderLogs();
+        document
+          .getElementById("applyLogFilters")
+          .addEventListener("click", () => alert("Фильтр логов (демо)"));
+        document
+          .getElementById("exportLogsBtn")
+          .addEventListener("click", () => alert("Экспорт XLSX (демо)"));
+      }
+
+      function switchTab(tabId) {
+        activeTab = tabId;
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((el) => el.classList.add("hidden"));
+        document.getElementById(`${tabId}Tab`).classList.remove("hidden");
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((btn) => btn.classList.remove("tab-active"));
+        document
+          .querySelector(`.tab-btn[data-tab="${tabId}"]`)
+          .classList.add("tab-active");
+        if (tabId === "users") renderUsersTab();
+        else if (tabId === "settings") renderSettingsTab();
+        else if (tabId === "templates") renderTemplatesTab();
+        else if (tabId === "statuses") renderStatusesTab();
+        else if (tabId === "stock") renderStockTab();
+        else if (tabId === "backup") renderBackupTab();
+        else if (tabId === "logs") renderLogsTab();
+      }
+
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+      });
+
+      switchTab("users");
+    </script>
+  </body>
+</html>

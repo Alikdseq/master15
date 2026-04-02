@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>Мастер Принт · Заказы</title>
+    <!-- Tailwind CSS + FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      /* дополнительные стили */
+      body {
+        background: #f0f4f8;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-align: center;
+      }
+      .status-accepted {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .status-diagnostics {
+        background: #ede9fe;
+        color: #5b21b6;
+      }
+      .status-negotiation {
+        background: #fed7aa;
+        color: #9a3412;
+      }
+      .status-waiting_parts {
+        background: #ffedd5;
+        color: #c2410c;
+      }
+      .status-repair {
+        background: #fce7f3;
+        color: #9d174d;
+      }
+      .status-ready {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .status-completed {
+        background: #e2e3e5;
+        color: #1e293b;
+      }
+
+      .filter-chip {
+        background: #eef2ff;
+        color: #2563eb;
+        padding: 4px 12px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .modal {
+        transition: opacity 0.25s ease;
+      }
+      .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+      }
+      /* анимация */
+      .clickable-row {
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .clickable-row:hover {
+        background-color: #f1f5f9;
+      }
+      @media (max-width: 768px) {
+        .orders-table th,
+        .orders-table td {
+          padding: 8px 6px;
+          font-size: 0.8rem;
+        }
+        .filter-bar {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body class="p-5 md:p-8">
+    <div class="max-w-7xl mx-auto">
+      <!-- Заголовок и кнопки -->
+      <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+          <i class="fas fa-clipboard-list text-blue-600 mr-3"></i>Заказы
+        </h1>
+        <div class="flex gap-3">
+          <button
+            id="createOrderBtn"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-full shadow-sm transition flex items-center gap-2"
+          >
+            <i class="fas fa-plus-circle"></i> Создать заказ
+          </button>
+          <button
+            id="exportBtn"
+            class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-5 rounded-full transition flex items-center gap-2"
+          >
+            <i class="fas fa-file-excel"></i> Экспорт
+          </button>
+        </div>
+      </div>
+
+      <!-- Фильтры и поиск -->
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6"
+      >
+        <div class="flex flex-wrap gap-3 items-end filter-bar">
+          <div class="min-w-[150px]">
+            <label class="block text-xs font-semibold text-gray-500 mb-1"
+              >Статус</label
+            >
+            <select
+              id="statusFilter"
+              class="w-full border border-gray-300 rounded-xl py-2 px-3 text-sm bg-white"
+            >
+              <option value="all">Все статусы</option>
+              <option value="accepted">Принят</option>
+              <option value="diagnostics">Диагностика</option>
+              <option value="negotiation">Согласование</option>
+              <option value="waiting_parts">Ожидание запчастей</option>
+              <option value="repair">В ремонте</option>
+              <option value="ready">Готов</option>
+              <option value="completed">Выдан</option>
+            </select>
+          </div>
+          <div class="min-w-[150px]">
+            <label class="block text-xs font-semibold text-gray-500 mb-1"
+              >Дата приёма (с)</label
+            >
+            <input
+              type="date"
+              id="dateFrom"
+              class="border border-gray-300 rounded-xl py-2 px-3 text-sm w-full"
+            />
+          </div>
+          <div class="min-w-[150px]">
+            <label class="block text-xs font-semibold text-gray-500 mb-1"
+              >Дата приёма (по)</label
+            >
+            <input
+              type="date"
+              id="dateTo"
+              class="border border-gray-300 rounded-xl py-2 px-3 text-sm w-full"
+            />
+          </div>
+          <div class="min-w-[150px]">
+            <label class="block text-xs font-semibold text-gray-500 mb-1"
+              >Мастер</label
+            >
+            <select
+              id="masterFilter"
+              class="w-full border border-gray-300 rounded-xl py-2 px-3 text-sm bg-white"
+            >
+              <option value="all">Все мастера</option>
+              <option value="Петров А.">Петров А.</option>
+              <option value="Сидоров М.">Сидоров М.</option>
+              <option value="Кузнецов Д.">Кузнецов Д.</option>
+            </select>
+          </div>
+          <div class="flex-1 min-w-[200px]">
+            <label class="block text-xs font-semibold text-gray-500 mb-1"
+              >Поиск</label
+            >
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="№ заказа, телефон, устройство..."
+              class="w-full border border-gray-300 rounded-xl py-2 px-3 text-sm"
+            />
+          </div>
+          <div>
+            <button
+              id="resetFiltersBtn"
+              class="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl py-2 px-5 text-sm transition"
+            >
+              <i class="fas fa-undo-alt mr-1"></i> Сбросить
+            </button>
+          </div>
+        </div>
+        <!-- активные фильтры (чипсы) - опционально -->
+        <div id="activeFilters" class="flex flex-wrap gap-2 mt-3 text-sm"></div>
+      </div>
+
+      <!-- Таблица заказов -->
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+      >
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm orders-table">
+            <thead class="bg-gray-50 text-gray-600 border-b">
+              <tr>
+                <th class="py-3 px-4 text-left">№ заказа</th>
+                <th class="py-3 px-4 text-left">Дата приёма</th>
+                <th class="py-3 px-4 text-left">Клиент</th>
+                <th class="py-3 px-4 text-left">Устройство</th>
+                <th class="py-3 px-4 text-left">Статус</th>
+                <th class="py-3 px-4 text-left">Мастер</th>
+                <th class="py-3 px-4 text-center">Действия</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <!-- динамические строки -->
+            </tbody>
+          </table>
+        </div>
+        <div
+          class="bg-gray-50 px-4 py-3 border-t flex justify-between items-center text-sm text-gray-500"
+        >
+          <div>Всего заказов: <span id="totalOrdersCount">0</span></div>
+          <div id="paginationControls" class="flex gap-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно: создание заказа -->
+    <div
+      id="createOrderModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center modal"
+    >
+      <div
+        class="modal-backdrop absolute inset-0 bg-black/50"
+        onclick="closeCreateModal()"
+      ></div>
+      <div
+        class="relative bg-white rounded-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+      >
+        <div
+          class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center"
+        >
+          <h2 class="text-xl font-bold">Новый заказ</h2>
+          <button
+            onclick="closeCreateModal()"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <div class="p-6">
+          <form id="orderForm">
+            <!-- Клиент -->
+            <div class="mb-5">
+              <label class="block font-medium mb-1">Клиент</label>
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  id="clientSearch"
+                  placeholder="Введите имя или телефон"
+                  class="flex-1 border rounded-xl px-4 py-2"
+                  autocomplete="off"
+                />
+                <button
+                  type="button"
+                  id="quickAddClientBtn"
+                  class="bg-gray-100 px-4 rounded-xl text-sm hover:bg-gray-200"
+                >
+                  <i class="fas fa-plus"></i> Новый
+                </button>
+              </div>
+              <div
+                id="clientSuggestions"
+                class="hidden absolute z-10 bg-white border rounded-xl mt-1 w-64 shadow-md"
+              ></div>
+              <input type="hidden" id="selectedClientId" value="" />
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <div>
+                <label class="block font-medium mb-1">Тип устройства</label
+                ><select
+                  id="deviceType"
+                  class="w-full border rounded-xl px-4 py-2"
+                >
+                  <option>Принтер</option>
+                  <option>МФУ</option>
+                  <option>Ноутбук</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-medium mb-1">Модель</label
+                ><input
+                  type="text"
+                  id="deviceModel"
+                  class="w-full border rounded-xl px-4 py-2"
+                />
+              </div>
+              <div>
+                <label class="block font-medium mb-1">Серийный номер</label
+                ><input
+                  type="text"
+                  id="serialNumber"
+                  class="w-full border rounded-xl px-4 py-2"
+                />
+              </div>
+              <div class="col-span-2">
+                <label class="block font-medium mb-1">Неисправность</label
+                ><textarea
+                  id="issueDesc"
+                  rows="2"
+                  class="w-full border rounded-xl px-4 py-2"
+                ></textarea>
+              </div>
+            </div>
+            <!-- Комплектация -->
+            <div class="mb-5">
+              <label class="block font-medium mb-2">Комплектация</label>
+              <div class="flex flex-wrap gap-4">
+                <label
+                  ><input type="checkbox" class="mr-1" /> Блок питания</label
+                >
+                <label><input type="checkbox" class="mr-1" /> Кабель USB</label>
+                <label
+                  ><input type="checkbox" class="mr-1" /> Кабель питания</label
+                >
+                <label><input type="checkbox" class="mr-1" /> Картридж</label>
+                <label
+                  ><input
+                    type="text"
+                    placeholder="Другое"
+                    class="border rounded-full px-3 py-1 text-sm w-32"
+                /></label>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <div>
+                <label class="block font-medium mb-1">Дата приёма</label
+                ><input
+                  type="date"
+                  id="receiveDate"
+                  class="w-full border rounded-xl px-4 py-2"
+                  value="2026-03-21"
+                />
+              </div>
+              <div>
+                <label class="block font-medium mb-1"
+                  >Желаемая дата готовности</label
+                ><input
+                  type="date"
+                  id="desiredDate"
+                  class="w-full border rounded-xl px-4 py-2"
+                />
+              </div>
+              <div>
+                <label class="block font-medium mb-1"
+                  >Предварительная стоимость (₽)</label
+                ><input
+                  type="number"
+                  id="prelimCost"
+                  class="w-full border rounded-xl px-4 py-2"
+                />
+              </div>
+              <div>
+                <label class="block font-medium mb-1">Назначенный мастер</label
+                ><select
+                  id="assignedMaster"
+                  class="w-full border rounded-xl px-4 py-2"
+                >
+                  <option>Петров А.</option>
+                  <option>Сидоров М.</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-5">
+              <label class="block font-medium mb-1">Фото (до 3)</label>
+              <div
+                class="border-dashed border-2 rounded-xl p-4 text-center text-gray-400"
+              >
+                <i class="fas fa-cloud-upload-alt text-2xl"></i>
+                <p class="text-sm">Кликните или перетащите</p>
+              </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t">
+              <button
+                type="button"
+                onclick="closeCreateModal()"
+                class="px-5 py-2 border rounded-full"
+              >
+                Отмена
+              </button>
+              <button
+                type="submit"
+                class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700"
+              >
+                Сохранить
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модалка детального просмотра заказа -->
+    <div
+      id="orderDetailModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center modal"
+    >
+      <div
+        class="modal-backdrop absolute inset-0 bg-black/50"
+        onclick="closeDetailModal()"
+      ></div>
+      <div
+        class="relative bg-white rounded-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+      >
+        <div
+          class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center"
+        >
+          <h2 class="text-xl font-bold">
+            Заказ <span id="detailOrderNumber"></span>
+          </h2>
+          <button
+            onclick="closeDetailModal()"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <div class="p-6" id="detailContent">
+          <!-- содержимое будет заполнено динамически -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ---------- Демо данные ----------
+      let orders = [
+        {
+          id: "2403-0012",
+          date: "2026-03-10",
+          client: "Иванов И.",
+          phone: "+7 918 123-45-67",
+          device: "Принтер HP 1018",
+          issue: "не печатает",
+          status: "ready",
+          master: "Петров А.",
+          prelimCost: 1500,
+          finalCost: 1800,
+          accessories: ["Блок питания", "Кабель USB"],
+        },
+        {
+          id: "2403-0015",
+          date: "2026-03-12",
+          client: "ООО Ромашка",
+          phone: "+7 903 111-22-33",
+          device: "МФУ Canon i-SENSYS",
+          issue: "шум при работе",
+          status: "negotiation",
+          master: "Сидоров М.",
+          prelimCost: 2500,
+        },
+        {
+          id: "2403-0020",
+          date: "2026-03-14",
+          client: "Петрова А.",
+          phone: "+7 928 987-65-43",
+          device: "Ноутбук Lenovo",
+          issue: "не включается",
+          status: "diagnostics",
+          master: "Кузнецов Д.",
+          prelimCost: 1200,
+        },
+        {
+          id: "2403-0025",
+          date: "2026-03-15",
+          client: "Смирнов К.",
+          phone: "+7 909 555-12-34",
+          device: "Принтер Samsung",
+          issue: "замена картриджа",
+          status: "waiting_parts",
+          master: "Петров А.",
+        },
+        {
+          id: "2403-0030",
+          date: "2026-03-18",
+          client: "Козлов А.",
+          phone: "+7 961 222-33-44",
+          device: "МФУ HP",
+          issue: "зажевывает бумагу",
+          status: "repair",
+          master: "Сидоров М.",
+          prelimCost: 2100,
+        },
+        {
+          id: "2403-0032",
+          date: "2026-03-19",
+          client: "Васильева Е.",
+          phone: "+7 918 555-66-77",
+          device: "Принтер Canon",
+          issue: "полосы при печати",
+          status: "accepted",
+          master: "Кузнецов Д.",
+        },
+        {
+          id: "2403-0035",
+          date: "2026-03-20",
+          client: "ООО ТехноСервис",
+          phone: "+7 495 123-45-67",
+          device: "Принтер HP M402dn",
+          issue: "не видит сеть",
+          status: "accepted",
+          master: "Петров А.",
+        },
+        {
+          id: "2403-0040",
+          date: "2026-03-21",
+          client: "Морозов И.",
+          phone: "+7 918 777-88-99",
+          device: "Ноутбук ASUS",
+          issue: "шумит кулер",
+          status: "accepted",
+          master: "Сидоров М.",
+        },
+      ];
+
+      // статусные маппинги
+      const statusMap = {
+        accepted: { label: "Принят", class: "status-accepted" },
+        diagnostics: { label: "Диагностика", class: "status-diagnostics" },
+        negotiation: { label: "Согласование", class: "status-negotiation" },
+        waiting_parts: {
+          label: "Ожидание запчастей",
+          class: "status-waiting_parts",
+        },
+        repair: { label: "В ремонте", class: "status-repair" },
+        ready: { label: "Готов", class: "status-ready" },
+        completed: { label: "Выдан", class: "status-completed" },
+      };
+
+      let currentFilter = {
+        status: "all",
+        dateFrom: "",
+        dateTo: "",
+        master: "all",
+        search: "",
+      };
+      let currentPage = 1;
+      const rowsPerPage = 5;
+
+      // функция рендера таблицы
+      function renderOrdersTable() {
+        let filtered = orders.filter((order) => {
+          if (
+            currentFilter.status !== "all" &&
+            order.status !== currentFilter.status
+          )
+            return false;
+          if (
+            currentFilter.master !== "all" &&
+            order.master !== currentFilter.master
+          )
+            return false;
+          if (currentFilter.dateFrom && order.date < currentFilter.dateFrom)
+            return false;
+          if (currentFilter.dateTo && order.date > currentFilter.dateTo)
+            return false;
+          if (currentFilter.search) {
+            const searchLower = currentFilter.search.toLowerCase();
+            return (
+              order.id.toLowerCase().includes(searchLower) ||
+              order.client.toLowerCase().includes(searchLower) ||
+              order.phone.includes(searchLower) ||
+              order.device.toLowerCase().includes(searchLower)
+            );
+          }
+          return true;
+        });
+
+        document.getElementById("totalOrdersCount").innerText = filtered.length;
+        const totalPages = Math.ceil(filtered.length / rowsPerPage);
+        const start = (currentPage - 1) * rowsPerPage;
+        const paginated = filtered.slice(start, start + rowsPerPage);
+
+        const tbody = document.getElementById("ordersTableBody");
+        tbody.innerHTML = paginated
+          .map(
+            (order) => `
+            <tr class="clickable-row border-b hover:bg-gray-50" data-order-id="${order.id}">
+                <td class="py-3 px-4 font-medium">${order.id}</td>
+                <td class="py-3 px-4">${order.date}</td>
+                <td class="py-3 px-4">${order.client}<br><span class="text-xs text-gray-400">${order.phone}</span></td>
+                <td class="py-3 px-4">${order.device}<br><span class="text-xs text-gray-400">${order.issue.substring(0, 30)}</span></td>
+                <td class="py-3 px-4"><span class="status-badge ${statusMap[order.status]?.class}">${statusMap[order.status]?.label}</span></td>
+                <td class="py-3 px-4">${order.master}</td>
+                <td class="py-3 px-4 text-center">
+                    <div class="flex justify-center gap-2">
+                        <select class="quick-status text-xs border rounded-lg px-2 py-1" data-order-id="${order.id}" data-current="${order.status}">
+                            ${Object.entries(statusMap)
+                              .map(
+                                ([val, lbl]) =>
+                                  `<option value="${val}" ${order.status === val ? "selected" : ""}>${lbl.label}</option>`,
+                              )
+                              .join("")}
+                        </select>
+                        <button class="view-detail text-blue-600 hover:text-blue-800" data-id="${order.id}"><i class="fas fa-eye"></i></button>
+                        <button class="text-gray-500 hover:text-gray-700"><i class="fas fa-edit"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `,
+          )
+          .join("");
+
+        // Пагинация
+        const paginationDiv = document.getElementById("paginationControls");
+        if (totalPages > 1) {
+          let btns = "";
+          for (let i = 1; i <= totalPages; i++) {
+            btns += `<button class="px-3 py-1 rounded-full ${i === currentPage ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"} text-sm" data-page="${i}">${i}</button>`;
+          }
+          paginationDiv.innerHTML = btns;
+          paginationDiv.querySelectorAll("button").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              currentPage = parseInt(btn.dataset.page);
+              renderOrdersTable();
+            });
+          });
+        } else {
+          paginationDiv.innerHTML = "";
+        }
+      }
+
+      // обработка фильтров
+      function updateFilters() {
+        currentFilter.status = document.getElementById("statusFilter").value;
+        currentFilter.dateFrom = document.getElementById("dateFrom").value;
+        currentFilter.dateTo = document.getElementById("dateTo").value;
+        currentFilter.master = document.getElementById("masterFilter").value;
+        currentFilter.search = document.getElementById("searchInput").value;
+        currentPage = 1;
+        renderOrdersTable();
+      }
+
+      document
+        .getElementById("statusFilter")
+        .addEventListener("change", updateFilters);
+      document
+        .getElementById("dateFrom")
+        .addEventListener("change", updateFilters);
+      document
+        .getElementById("dateTo")
+        .addEventListener("change", updateFilters);
+      document
+        .getElementById("masterFilter")
+        .addEventListener("change", updateFilters);
+      document
+        .getElementById("searchInput")
+        .addEventListener("input", updateFilters);
+      document
+        .getElementById("resetFiltersBtn")
+        .addEventListener("click", () => {
+          document.getElementById("statusFilter").value = "all";
+          document.getElementById("dateFrom").value = "";
+          document.getElementById("dateTo").value = "";
+          document.getElementById("masterFilter").value = "all";
+          document.getElementById("searchInput").value = "";
+          updateFilters();
+        });
+
+      // изменение статуса через выпадающий список (quick)
+      function attachQuickStatusEvents() {
+        document.querySelectorAll(".quick-status").forEach((select) => {
+          select.removeEventListener("change", handleStatusChange);
+          select.addEventListener("change", handleStatusChange);
+        });
+      }
+      function handleStatusChange(e) {
+        const orderId = e.target.dataset.orderId;
+        const newStatus = e.target.value;
+        const order = orders.find((o) => o.id === orderId);
+        if (order) {
+          order.status = newStatus;
+          renderOrdersTable(); // перерисовка обновит и выпадающий список
+        }
+      }
+
+      // детальный просмотр
+      function showOrderDetail(orderId) {
+        const order = orders.find((o) => o.id === orderId);
+        if (!order) return;
+        document.getElementById("detailOrderNumber").innerText = order.id;
+        const detailHtml = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-gray-500 mb-1">Клиент</p>
+                    <p class="font-medium">${order.client}</p>
+                    <p class="text-gray-500 text-sm">${order.phone}</p>
+                    <hr class="my-3">
+                    <p class="text-gray-500 mb-1">Устройство</p>
+                    <p>${order.device}</p>
+                    <p class="text-gray-500 text-sm">Неисправность: ${order.issue}</p>
+                    <p class="mt-2"><span class="font-medium">Комплектация:</span> ${order.accessories?.join(", ") || "не указана"}</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 mb-1">Дата приёма</p>
+                    <p>${order.date}</p>
+                    <p class="text-gray-500 mb-1 mt-3">Стоимость</p>
+                    <p>Предв.: ${order.prelimCost || "—"} ₽ | Оконч.: ${order.finalCost || "—"} ₽</p>
+                    <p class="text-gray-500 mb-1 mt-3">Мастер</p>
+                    <p>${order.master}</p>
+                    <div class="mt-4">
+                        <label class="block font-medium">Изменить статус</label>
+                        <select id="detailStatusSelect" class="border rounded-xl px-3 py-2 w-full mt-1">
+                            ${Object.entries(statusMap)
+                              .map(
+                                ([val, lbl]) =>
+                                  `<option value="${val}" ${order.status === val ? "selected" : ""}>${lbl.label}</option>`,
+                              )
+                              .join("")}
+                        </select>
+                        <button id="saveDetailStatus" class="mt-3 bg-blue-600 text-white px-4 py-2 rounded-full text-sm">Сохранить</button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 border-t pt-4">
+                <h3 class="font-semibold">История статусов</h3>
+                <ul class="text-sm text-gray-600 mt-2 space-y-1">
+                    <li><i class="fas fa-check-circle text-green-500 mr-2"></i> ${order.date} — Принят (администратор)</li>
+                    <li><i class="fas fa-arrow-right text-blue-500 mr-2"></i> ${order.date} — Диагностика (мастер)</li>
+                    ${order.status === "ready" ? "<li>✅ Готов — SMS отправлено</li>" : ""}
+                </ul>
+            </div>
+            <div class="mt-6 border-t pt-4">
+                <h3 class="font-semibold">Использованные материалы</h3>
+                <p class="text-gray-500 text-sm">Нет добавленных материалов</p>
+                <button class="mt-2 bg-gray-100 px-4 py-1 rounded-full text-sm"><i class="fas fa-plus"></i> Добавить материал</button>
+            </div>
+        `;
+        document.getElementById("detailContent").innerHTML = detailHtml;
+        document
+          .getElementById("saveDetailStatus")
+          ?.addEventListener("click", () => {
+            const newStat = document.getElementById("detailStatusSelect").value;
+            order.status = newStat;
+            renderOrdersTable();
+            closeDetailModal();
+            showOrderDetail(order.id);
+          });
+        document.getElementById("orderDetailModal").classList.remove("hidden");
+        document.getElementById("orderDetailModal").classList.add("flex");
+      }
+
+      function closeDetailModal() {
+        document.getElementById("orderDetailModal").classList.add("hidden");
+        document.getElementById("orderDetailModal").classList.remove("flex");
+      }
+
+      // делегирование событий для кликов по строкам и кнопкам
+      document
+        .getElementById("ordersTableBody")
+        .addEventListener("click", (e) => {
+          const row = e.target.closest(".clickable-row");
+          if (
+            row &&
+            !e.target.closest(".quick-status") &&
+            !e.target.closest(".view-detail") &&
+            !e.target.closest(".fa-edit")
+          ) {
+            const orderId = row.dataset.orderId;
+            if (orderId) showOrderDetail(orderId);
+          }
+          if (e.target.closest(".view-detail")) {
+            const btn = e.target.closest(".view-detail");
+            const orderId = btn.dataset.id;
+            showOrderDetail(orderId);
+          }
+        });
+
+      // создание заказа
+      const createModal = document.getElementById("createOrderModal");
+      function openCreateModal() {
+        createModal.classList.remove("hidden");
+        createModal.classList.add("flex");
+      }
+      function closeCreateModal() {
+        createModal.classList.add("hidden");
+        createModal.classList.remove("flex");
+      }
+      document
+        .getElementById("createOrderBtn")
+        .addEventListener("click", openCreateModal);
+      document.getElementById("orderForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const newOrder = {
+          id: "24" + Math.floor(Math.random() * 1000),
+          date: new Date().toISOString().slice(0, 10),
+          client:
+            document.getElementById("clientSearch").value || "Новый клиент",
+          phone: "+7 999 000-11-22",
+          device:
+            document.getElementById("deviceType").value +
+            " " +
+            document.getElementById("deviceModel").value,
+          issue: document.getElementById("issueDesc").value || "не указано",
+          status: "accepted",
+          master: document.getElementById("assignedMaster").value,
+          prelimCost:
+            parseInt(document.getElementById("prelimCost").value) || 0,
+        };
+        orders.unshift(newOrder);
+        renderOrdersTable();
+        closeCreateModal();
+        alert("Заказ создан. SMS отправлено клиенту.");
+      });
+
+      // экспорт (демо)
+      document
+        .getElementById("exportBtn")
+        .addEventListener("click", () => alert("Экспорт XLSX (демо-режим)"));
+
+      // первоначальный рендер
+      renderOrdersTable();
+      attachQuickStatusEvents();
+      // перехватчик для обновления быстрых статусов после перерисовки
+      const observer = new MutationObserver(() => attachQuickStatusEvents());
+      observer.observe(document.getElementById("ordersTableBody"), {
+        childList: true,
+        subtree: true,
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мастер Принт · WhatsApp уведомления</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body class="max-w-3xl mx-auto p-6 bg-gray-50">
+    <div class="flex items-center gap-3 mb-8">
+      <i class="fab fa-whatsapp text-green-600 text-4xl"></i>
+      <h1 class="text-3xl font-bold">Автоуведомления в WhatsApp</h1>
+    </div>
+
+    <div class="bg-white rounded-3xl p-8 shadow-lg">
+      <p class="text-lg mb-6">
+        При изменении статуса заказа на «Готов» клиенту автоматически приходит
+        сообщение.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        <div>
+          <h2 class="font-bold mb-4">Текущие заказы:</h2>
+          <div class="space-y-3">
+            <div
+              class="p-4 border rounded-xl flex justify-between items-center"
+            >
+              <div>
+                <span class="font-medium">Иванов Петр</span>
+                <span class="text-sm text-gray-500 block"
+                  >HP LaserJet · Статус:
+                  <span id="orderStatus" class="font-semibold text-yellow-600"
+                    >В ремонте</span
+                  ></span
+                >
+              </div>
+              <button
+                id="markReadyBtn"
+                class="btn bg-green-600 text-white px-4 py-2 rounded-xl text-sm"
+              >
+                ✅ Готово
+              </button>
+            </div>
+            <div class="p-4 border rounded-xl bg-gray-50">
+              <span class="font-medium">Сидорова Анна</span>
+              <span class="text-sm text-gray-500 block"
+                >Canon · Статус:
+                <span class="text-green-600 font-semibold">Готов</span></span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-100 rounded-2xl p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fab fa-whatsapp text-2xl text-green-600"></i>
+            <span class="font-bold">Последнее отправленное</span>
+          </div>
+          <div
+            id="lastMessage"
+            class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-green-500"
+          >
+            <p class="text-sm">
+              Нажмите «Готово», чтобы отправить тестовое уведомление
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const markBtn = document.getElementById("markReadyBtn");
+      const statusSpan = document.getElementById("orderStatus");
+      const lastMessageDiv = document.getElementById("lastMessage");
+
+      markBtn.addEventListener("click", () => {
+        statusSpan.innerText = "Готов";
+        statusSpan.className = "font-semibold text-green-600";
+        lastMessageDiv.innerHTML = `
+                <div class="flex items-start gap-2">
+                    <i class="fab fa-whatsapp text-green-600 text-xl"></i>
+                    <div>
+                        <p class="font-semibold">Иванов Петр</p>
+                        <p class="text-sm">Ваш принтер HP отремонтирован и ждёт вас в Мастер Принт на Кесаева, 18. Режим работы: пн-пт 9:00–19:00, сб 10:00–16:00. Ждём!</p>
+                        <p class="text-xs text-gray-500 mt-2">Автосообщение · только что</p>
+                    </div>
+                </div>
+            `;
+        markBtn.disabled = true;
+        markBtn.classList.add("opacity-50");
+      });
+    </script>
+  </body>
+</html>

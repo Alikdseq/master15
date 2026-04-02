@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мастер Принт · Журнал заказов</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background: #f4f7fb;
+        padding: 20px;
+      }
+      .card {
+        background: white;
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      }
+      .btn {
+        padding: 8px 16px;
+        border-radius: 30px;
+        font-weight: 500;
+        transition: 0.2s;
+      }
+      .btn-primary {
+        background: #2563eb;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #1d4ed8;
+      }
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body class="max-w-5xl mx-auto">
+    <div class="flex items-center gap-3 mb-8">
+      <i class="fas fa-clipboard-list text-blue-600 text-3xl"></i>
+      <h1 class="text-3xl font-bold">Электронный журнал заказов</h1>
+    </div>
+
+    <div class="card mb-6 flex flex-wrap gap-4 items-center justify-between">
+      <div class="flex gap-2">
+        <button class="btn btn-primary" onclick="addOrder()">
+          + Новый заказ
+        </button>
+        <select
+          class="border rounded-xl px-4 py-2"
+          onchange="filterOrders(this.value)"
+        >
+          <option value="all">Все статусы</option>
+          <option value="Принят">Принят</option>
+          <option value="В ремонте">В ремонте</option>
+          <option value="Готов">Готов</option>
+        </select>
+      </div>
+      <div class="text-sm text-gray-500">
+        Всего заказов: <span id="orderCount">5</span>
+      </div>
+    </div>
+
+    <div id="ordersList" class="grid gap-4">
+      <!-- динамически через JS -->
+    </div>
+
+    <script>
+      let orders = [
+        {
+          id: 1,
+          client: "Иванов Петр",
+          phone: "+7 918 123-45-67",
+          device: "HP LaserJet 1018",
+          issue: "Не печатает",
+          status: "В ремонте",
+        },
+        {
+          id: 2,
+          client: "Сидорова Анна",
+          phone: "+7 928 987-65-43",
+          device: "Canon MF3010",
+          issue: "Бумагу жует",
+          status: "Принят",
+        },
+        {
+          id: 3,
+          client: "Петров Иван",
+          phone: "+7 903 555-22-11",
+          device: "Samsung SCX-3405",
+          issue: "Не включается",
+          status: "Готов",
+        },
+        {
+          id: 4,
+          client: 'ООО "Ромашка"',
+          phone: "+7 903 111-22-33",
+          device: "Принтер HP M402dn",
+          issue: "Картридж закончился",
+          status: "В ремонте",
+        },
+        {
+          id: 5,
+          client: "Козлов Андрей",
+          phone: "+7 918 777-88-99",
+          device: "Ксерокс",
+          issue: "Копирует полосами",
+          status: "Готов",
+        },
+      ];
+
+      function renderOrders(filter = "all") {
+        const list = document.getElementById("ordersList");
+        const filtered =
+          filter === "all" ? orders : orders.filter((o) => o.status === filter);
+        list.innerHTML = filtered
+          .map(
+            (o) => `
+                <div class="card border-l-4 border-l-blue-500 flex flex-wrap md:flex-nowrap justify-between items-start gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="font-bold">${o.client}</span>
+                            <span class="text-gray-600">${o.phone}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-1">${o.device} · ${o.issue}</div>
+                        <div class="flex items-center gap-3 mt-2">
+                            <span class="status-badge ${o.status === "Готов" ? "bg-green-100 text-green-800" : o.status === "В ремонте" ? "bg-yellow-100 text-yellow-800" : "bg-blue-100 text-blue-800"}">${o.status}</span>
+                            <select class="text-xs border rounded-lg p-1" onchange="updateStatus(${o.id}, this.value)">
+                                <option value="Принят" ${o.status === "Принят" ? "selected" : ""}>Принят</option>
+                                <option value="В ремонте" ${o.status === "В ремонте" ? "selected" : ""}>В ремонте</option>
+                                <option value="Готов" ${o.status === "Готов" ? "selected" : ""}>Готов</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="text-red-500 text-sm" onclick="deleteOrder(${o.id})"><i class="far fa-trash-alt"></i></button>
+                </div>
+            `,
+          )
+          .join("");
+        document.getElementById("orderCount").innerText = orders.length;
+      }
+
+      function updateStatus(id, newStatus) {
+        const order = orders.find((o) => o.id === id);
+        if (order) order.status = newStatus;
+        renderOrders(document.querySelector("select").value);
+      }
+
+      function deleteOrder(id) {
+        orders = orders.filter((o) => o.id !== id);
+        renderOrders(document.querySelector("select").value);
+      }
+
+      function addOrder() {
+        const newId = orders.length + 1;
+        orders.push({
+          id: newId,
+          client: "Новый клиент",
+          phone: "+7 999 000-11-22",
+          device: "Принтер",
+          issue: "Тестовая неисправность",
+          status: "Принят",
+        });
+        renderOrders(document.querySelector("select").value);
+      }
+
+      function filterOrders(val) {
+        renderOrders(val);
+      }
+
+      renderOrders();
+    </script>
+  </body>
+</html>

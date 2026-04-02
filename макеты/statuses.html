@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мастер Принт · Статусная линейка</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body class="max-w-4xl mx-auto p-6 bg-gray-50">
+    <div class="flex items-center gap-3 mb-8">
+      <i class="fas fa-tasks text-purple-600 text-3xl"></i>
+      <h1 class="text-3xl font-bold">Статусная линейка заказов</h1>
+    </div>
+
+    <div class="bg-white rounded-3xl p-8">
+      <h2 class="text-xl font-bold mb-6">
+        Этапы для заказа №1245 (Иванов, HP)
+      </h2>
+
+      <div class="flex flex-wrap gap-2 mb-8">
+        <span
+          class="status-step px-4 py-2 rounded-full text-sm font-medium bg-gray-200"
+          >Принят</span
+        >
+        <span
+          class="status-step px-4 py-2 rounded-full text-sm font-medium bg-gray-200"
+          >Диагностика</span
+        >
+        <span
+          class="status-step px-4 py-2 rounded-full text-sm font-medium bg-gray-200"
+          >Согласование</span
+        >
+        <span
+          class="status-step px-4 py-2 rounded-full text-sm font-medium bg-gray-200"
+          >Ожидание запчастей</span
+        >
+        <span
+          class="status-step px-4 py-2 rounded-full text-sm font-medium bg-gray-200"
+          >В ремонте</span
+        >
+        <span
+          class="status-step px-4 py-2 rounded-full text-sm font-medium bg-gray-200"
+          >Готов</span
+        >
+        <span
+          class="status-step px-4 py-2 rounded-full text-sm font-medium bg-gray-200"
+          >Выдан</span
+        >
+      </div>
+
+      <p class="mb-4">
+        Текущий статус:
+        <span id="currentStatusDisplay" class="font-bold text-blue-600"
+          >Принят</span
+        >
+      </p>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button
+          onclick="setStatus(0)"
+          class="bg-blue-100 hover:bg-blue-200 p-3 rounded-xl"
+        >
+          Принят
+        </button>
+        <button
+          onclick="setStatus(1)"
+          class="bg-blue-100 hover:bg-blue-200 p-3 rounded-xl"
+        >
+          Диагностика
+        </button>
+        <button
+          onclick="setStatus(2)"
+          class="bg-blue-100 hover:bg-blue-200 p-3 rounded-xl"
+        >
+          Согласование
+        </button>
+        <button
+          onclick="setStatus(3)"
+          class="bg-blue-100 hover:bg-blue-200 p-3 rounded-xl"
+        >
+          Ожидание запчастей
+        </button>
+        <button
+          onclick="setStatus(4)"
+          class="bg-blue-100 hover:bg-blue-200 p-3 rounded-xl"
+        >
+          В ремонте
+        </button>
+        <button
+          onclick="setStatus(5)"
+          class="bg-blue-100 hover:bg-blue-200 p-3 rounded-xl"
+        >
+          Готов
+        </button>
+        <button
+          onclick="setStatus(6)"
+          class="bg-blue-100 hover:bg-blue-200 p-3 rounded-xl"
+        >
+          Выдан
+        </button>
+      </div>
+
+      <div class="mt-8 p-4 bg-green-50 rounded-xl" id="statsDemo">
+        <p class="font-medium">Сводка:</p>
+        <p>Заказов в работе: 8</p>
+        <p>Ожидают запчасти: 3</p>
+        <p>Готовы к выдаче: 5</p>
+      </div>
+    </div>
+
+    <script>
+      const steps = document.querySelectorAll(".status-step");
+      const currentDisplay = document.getElementById("currentStatusDisplay");
+      let currentStep = 0;
+
+      function setStatus(index) {
+        steps.forEach((s, i) => {
+          if (i <= index) {
+            s.classList.add("bg-blue-600", "text-white");
+            s.classList.remove("bg-gray-200");
+          } else {
+            s.classList.remove("bg-blue-600", "text-white");
+            s.classList.add("bg-gray-200");
+          }
+        });
+        currentDisplay.innerText = steps[index].innerText;
+      }
+      setStatus(0);
+    </script>
+  </body>
+</html>

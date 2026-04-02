@@ -1,0 +1,13 @@
+:root {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  color: #231f20;
+  background: #f5f7fa;
+}
+
+#root {
+  min-height: 100vh;
+}

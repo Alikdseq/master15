@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>Мастер Принт · Клиенты</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      /* custom styles */
+      body {
+        background: #f0f4f8;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      .tag {
+        display: inline-block;
+        background-color: #eef2ff;
+        color: #2563eb;
+        border-radius: 30px;
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-right: 6px;
+        margin-bottom: 4px;
+      }
+      .status-badge {
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+      .status-ready {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .status-repair {
+        background: #fce7f3;
+        color: #9d174d;
+      }
+      .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+      }
+      .clickable-row {
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .clickable-row:hover {
+        background-color: #f1f5f9;
+      }
+      .tab-active {
+        border-bottom: 2px solid #2563eb;
+        color: #2563eb;
+      }
+      @media (max-width: 768px) {
+        .client-table th,
+        .client-table td {
+          padding: 8px 6px;
+          font-size: 0.8rem;
+        }
+        .filters-row {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body class="p-5 md:p-8">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+          <i class="fas fa-users text-blue-600 mr-3"></i>Клиенты
+        </h1>
+        <div class="flex gap-3">
+          <button
+            id="newClientBtn"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-full shadow-sm transition flex items-center gap-2"
+          >
+            <i class="fas fa-user-plus"></i> Новый клиент
+          </button>
+          <button
+            id="exportBtn"
+            class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-5 rounded-full transition flex items-center gap-2"
+          >
+            <i class="fas fa-file-excel"></i> Экспорт
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters bar -->
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6"
+      >
+        <div class="flex flex-wrap gap-3 items-end filters-row">
+          <div class="flex-1 min-w-[200px]">
+            <label class="block text-xs font-semibold text-gray-500 mb-1"
+              >Поиск</label
+            >
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Имя, телефон, email..."
+              class="w-full border border-gray-300 rounded-xl py-2 px-3 text-sm"
+            />
+          </div>
+          <div class="min-w-[150px]">
+            <label class="block text-xs font-semibold text-gray-500 mb-1"
+              >Теги</label
+            >
+            <select
+              id="tagFilter"
+              class="w-full border border-gray-300 rounded-xl py-2 px-3 text-sm bg-white"
+            >
+              <option value="all">Все теги</option>
+              <option value="VIP">VIP</option>
+              <option value="Постоянный">Постоянный</option>
+              <option value="Оптовик">Оптовик</option>
+            </select>
+          </div>
+          <div>
+            <button
+              id="resetFiltersBtn"
+              class="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl py-2 px-5 text-sm transition"
+            >
+              <i class="fas fa-undo-alt mr-1"></i> Сбросить
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clients table -->
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+      >
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm client-table">
+            <thead class="bg-gray-50 text-gray-600 border-b">
+              <tr>
+                <th class="py-3 px-4 text-left">Клиент</th>
+                <th class="py-3 px-4 text-left">Телефон</th>
+                <th class="py-3 px-4 text-left">Email</th>
+                <th class="py-3 px-4 text-left">Первое обращение</th>
+                <th class="py-3 px-4 text-left">Заказов</th>
+                <th class="py-3 px-4 text-left">Последний заказ</th>
+                <th class="py-3 px-4 text-left">Теги</th>
+                <th class="py-3 px-4 text-center">Действия</th>
+              </tr>
+            </thead>
+            <tbody id="clientsTableBody">
+              <!-- dynamic -->
+            </tbody>
+          </table>
+        </div>
+        <div
+          class="bg-gray-50 px-4 py-3 border-t flex justify-between items-center text-sm text-gray-500"
+        >
+          <div>Всего клиентов: <span id="totalClientsCount">0</span></div>
+          <div id="paginationControls" class="flex gap-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: New Client -->
+    <div
+      id="newClientModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center"
+    >
+      <div
+        class="modal-backdrop absolute inset-0 bg-black/50"
+        onclick="closeNewClientModal()"
+      ></div>
+      <div
+        class="relative bg-white rounded-2xl max-w-lg w-full mx-4 shadow-2xl"
+      >
+        <div
+          class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center"
+        >
+          <h2 class="text-xl font-bold">Новый клиент</h2>
+          <button
+            onclick="closeNewClientModal()"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <div class="p-6">
+          <form id="newClientForm">
+            <div class="mb-4">
+              <label class="block font-medium mb-1">Имя / Название *</label>
+              <input
+                type="text"
+                id="clientName"
+                required
+                class="w-full border rounded-xl px-4 py-2"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block font-medium mb-1">Телефон *</label>
+              <input
+                type="tel"
+                id="clientPhone"
+                required
+                class="w-full border rounded-xl px-4 py-2"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block font-medium mb-1">Email</label>
+              <input
+                type="email"
+                id="clientEmail"
+                class="w-full border rounded-xl px-4 py-2"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block font-medium mb-1">Теги (через запятую)</label>
+              <input
+                type="text"
+                id="clientTags"
+                placeholder="VIP, Постоянный"
+                class="w-full border rounded-xl px-4 py-2"
+              />
+            </div>
+            <div class="flex justify-end gap-3 pt-4">
+              <button
+                type="button"
+                onclick="closeNewClientModal()"
+                class="px-5 py-2 border rounded-full"
+              >
+                Отмена
+              </button>
+              <button
+                type="submit"
+                class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700"
+              >
+                Создать
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Client Card -->
+    <div
+      id="clientCardModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center"
+    >
+      <div
+        class="modal-backdrop absolute inset-0 bg-black/50"
+        onclick="closeClientCard()"
+      ></div>
+      <div
+        class="relative bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+      >
+        <div
+          class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center"
+        >
+          <h2 class="text-xl font-bold" id="modalClientName"></h2>
+          <button
+            onclick="closeClientCard()"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <div id="clientCardContent" class="p-6">
+          <!-- dynamic content -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ---------- MOCK DATA ----------
+      let clients = [
+        {
+          id: 1,
+          name: "Иванов Иван Петрович",
+          phone: "+7 918 123-45-67",
+          email: "ivan@mail.ru",
+          firstContact: "2024-01-10",
+          tags: ["VIP", "Постоянный"],
+          orders: [
+            {
+              id: "2403-0012",
+              date: "2026-03-10",
+              device: "Принтер HP 1018",
+              issue: "не печатает",
+              status: "ready",
+              cost: 1800,
+            },
+            {
+              id: "2403-0005",
+              date: "2025-12-05",
+              device: "Принтер HP 1018",
+              issue: "заправка",
+              status: "completed",
+              cost: 800,
+            },
+          ],
+        },
+        {
+          id: 2,
+          name: "ООО Ромашка",
+          phone: "+7 867 222-33-44",
+          email: "office@romashka.ru",
+          firstContact: "2025-02-15",
+          tags: ["Оптовик"],
+          orders: [
+            {
+              id: "2403-0015",
+              date: "2026-03-12",
+              device: "МФУ Canon i-SENSYS",
+              issue: "шум",
+              status: "negotiation",
+              cost: null,
+            },
+            {
+              id: "2402-0040",
+              date: "2026-02-20",
+              device: "Принтер HP M402dn",
+              issue: "замена картриджа",
+              status: "completed",
+              cost: 3500,
+            },
+          ],
+        },
+        {
+          id: 3,
+          name: "Петрова Анна",
+          phone: "+7 928 987-65-43",
+          email: "anna@example.com",
+          firstContact: "2025-05-20",
+          tags: ["Постоянный"],
+          orders: [
+            {
+              id: "2403-0020",
+              date: "2026-03-14",
+              device: "Ноутбук Lenovo",
+              issue: "не включается",
+              status: "diagnostics",
+              cost: null,
+            },
+            {
+              id: "2402-0030",
+              date: "2026-02-10",
+              device: "Принтер Samsung",
+              issue: "полосы",
+              status: "completed",
+              cost: 1200,
+            },
+          ],
+        },
+        {
+          id: 4,
+          name: "Смирнов Константин",
+          phone: "+7 909 555-12-34",
+          email: "smirnov@mail.ru",
+          firstContact: "2025-08-01",
+          tags: [],
+          orders: [
+            {
+              id: "2403-0025",
+              date: "2026-03-15",
+              device: "Принтер Samsung",
+              issue: "замена картриджа",
+              status: "waiting_parts",
+              cost: null,
+            },
+          ],
+        },
+        {
+          id: 5,
+          name: "Козлов Андрей",
+          phone: "+7 961 222-33-44",
+          email: "kozlov@example.com",
+          firstContact: "2025-10-12",
+          tags: [],
+          orders: [
+            {
+              id: "2403-0030",
+              date: "2026-03-18",
+              device: "МФУ HP",
+              issue: "зажевывает бумагу",
+              status: "repair",
+              cost: null,
+            },
+          ],
+        },
+        {
+          id: 6,
+          name: "Васильева Елена",
+          phone: "+7 918 555-66-77",
+          email: "vasilieva@mail.ru",
+          firstContact: "2026-01-05",
+          tags: ["VIP"],
+          orders: [
+            {
+              id: "2403-0032",
+              date: "2026-03-19",
+              device: "Принтер Canon",
+              issue: "полосы",
+              status: "accepted",
+              cost: null,
+            },
+          ],
+        },
+      ];
+
+      // Helper to get last order info
+      function getLastOrder(client) {
+        if (!client.orders.length) return { date: "—", status: "—" };
+        const sorted = [...client.orders].sort(
+          (a, b) => new Date(b.date) - new Date(a.date),
+        );
+        const last = sorted[0];
+        return { date: last.date, status: last.status, orderId: last.id };
+      }
+
+      // Status display
+      const statusNames = {
+        accepted: "Принят",
+        diagnostics: "Диагностика",
+        negotiation: "Согласование",
+        waiting_parts: "Ожидание запчастей",
+        repair: "В ремонте",
+        ready: "Готов",
+        completed: "Выдан",
+      };
+      const statusClass = {
+        ready: "status-ready",
+        completed: "status-ready",
+        repair: "status-repair",
+        waiting_parts: "status-repair",
+      };
+
+      // Global state
+      let currentFilter = { search: "", tag: "all" };
+      let currentPage = 1;
+      const rowsPerPage = 5;
+
+      function filterClients() {
+        let filtered = clients.filter((c) => {
+          if (currentFilter.search) {
+            const s = currentFilter.search.toLowerCase();
+            if (
+              !c.name.toLowerCase().includes(s) &&
+              !c.phone.includes(s) &&
+              !c.email.toLowerCase().includes(s)
+            )
+              return false;
+          }
+          if (
+            currentFilter.tag !== "all" &&
+            !c.tags.includes(currentFilter.tag)
+          )
+            return false;
+          return true;
+        });
+        return filtered;
+      }
+
+      function renderTable() {
+        const filtered = filterClients();
+        const total = filtered.length;
+        document.getElementById("totalClientsCount").innerText = total;
+        const start = (currentPage - 1) * rowsPerPage;
+        const paginated = filtered.slice(start, start + rowsPerPage);
+        const tbody = document.getElementById("clientsTableBody");
+        tbody.innerHTML = paginated
+          .map((c) => {
+            const last = getLastOrder(c);
+            const statusDisplay =
+              last.status !== "—"
+                ? statusNames[last.status] || last.status
+                : "—";
+            const statusClassVal =
+              last.status !== "—" ? statusClass[last.status] || "" : "";
+            return `
+                <tr class="clickable-row border-b" data-client-id="${c.id}">
+                    <td class="py-3 px-4 font-medium">${c.name}${c.tags.includes("VIP") ? ' <i class="fas fa-crown text-yellow-500 text-xs"></i>' : ""}</td>
+                    <td class="py-3 px-4">${c.phone}</td>
+                    <td class="py-3 px-4">${c.email || "—"}</td>
+                    <td class="py-3 px-4">${c.firstContact}</td>
+                    <td class="py-3 px-4">${c.orders.length}</td>
+                    <td class="py-3 px-4">${last.date !== "—" ? last.date + '<br><span class="status-badge ' + statusClassVal + '">' + statusDisplay + "</span>" : "—"}</td>
+                    <td class="py-3 px-4">${c.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button class="view-client text-blue-600 hover:text-blue-800 mx-1" data-id="${c.id}"><i class="fas fa-eye"></i></button>
+                        <button class="create-order-from-client text-green-600 hover:text-green-800 mx-1" data-id="${c.id}"><i class="fas fa-plus-circle"></i></button>
+                    </td>
+                </tr>
+            `;
+          })
+          .join("");
+        // pagination
+        const totalPages = Math.ceil(total / rowsPerPage);
+        const paginationDiv = document.getElementById("paginationControls");
+        if (totalPages > 1) {
+          let btns = "";
+          for (let i = 1; i <= totalPages; i++) {
+            btns += `<button class="px-3 py-1 rounded-full ${i === currentPage ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"} text-sm" data-page="${i}">${i}</button>`;
+          }
+          paginationDiv.innerHTML = btns;
+          paginationDiv.querySelectorAll("button").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              currentPage = parseInt(btn.dataset.page);
+              renderTable();
+            });
+          });
+        } else {
+          paginationDiv.innerHTML = "";
+        }
+      }
+
+      function openClientCard(clientId) {
+        const client = clients.find((c) => c.id == clientId);
+        if (!client) return;
+        document.getElementById("modalClientName").innerHTML =
+          client.name +
+          (client.tags.includes("VIP")
+            ? ' <i class="fas fa-crown text-yellow-500 text-sm"></i>'
+            : "");
+        const ordersHtml =
+          client.orders
+            .map(
+              (o) => `
+            <tr class="border-b">
+                <td class="py-2">${o.id}</td>
+                <td class="py-2">${o.date}</td>
+                <td class="py-2">${o.device}</td>
+                <td class="py-2">${o.issue}</td>
+                <td class="py-2"><span class="status-badge ${statusClass[o.status] || ""}">${statusNames[o.status]}</span></td>
+                <td class="py-2">${o.cost ? o.cost + " ₽" : "—"}</td>
+                <td class="py-2"><button class="text-blue-600 text-sm repeat-order" data-order-id="${o.id}"><i class="fas fa-copy"></i> Повторить</button></td>
+            </tr>
+        `,
+            )
+            .join("") ||
+          '<tr><td colspan="7" class="py-4 text-center text-gray-500">Нет заказов</td></tr>';
+        const totalOrders = client.orders.length;
+        const completed = client.orders.filter(
+          (o) => o.status === "completed",
+        ).length;
+        const inWork = client.orders.filter(
+          (o) => !["completed", "ready"].includes(o.status),
+        ).length;
+        const totalSum = client.orders.reduce((s, o) => s + (o.cost || 0), 0);
+        const avgCheck = totalOrders ? (totalSum / totalOrders).toFixed(0) : 0;
+        const lastOrder = client.orders.length
+          ? client.orders.sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+          : null;
+
+        // Статистика по типам устройств (простая)
+        const deviceCount = {};
+        client.orders.forEach((o) => {
+          const type = o.device.split(" ")[0];
+          deviceCount[type] = (deviceCount[type] || 0) + 1;
+        });
+        const topDevices =
+          Object.entries(deviceCount)
+            .slice(0, 2)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(", ") || "—";
+        const topIssues = client.orders.reduce((acc, o) => {
+          acc[o.issue] = (acc[o.issue] || 0) + 1;
+          return acc;
+        }, {});
+        const topIssue =
+          Object.entries(topIssues).sort((a, b) => b[1] - a[1])[0] || null;
+
+        const notes = [
+          {
+            date: "2026-03-15",
+            author: "Администратор",
+            text: "Клиент попросил звонить только после 16:00",
+          },
+          {
+            date: "2026-02-10",
+            author: "Менеджер",
+            text: "Предложил скидку на профилактику",
+          },
+        ];
+        const notifications = [
+          {
+            date: "2026-03-10",
+            text: "SMS: Ваш принтер готов",
+            status: "доставлено",
+          },
+          {
+            date: "2026-03-05",
+            text: "SMS: Напоминание о профилактике",
+            status: "доставлено",
+          },
+        ];
+
+        const content = `
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2">
+                    <!-- Tabs -->
+                    <div class="border-b flex gap-4 mb-4">
+                        <button class="tab-btn py-2 px-1 font-medium text-gray-600" data-tab="info">Основная информация</button>
+                        <button class="tab-btn py-2 px-1 font-medium text-gray-600" data-tab="orders">История заказов</button>
+                        <button class="tab-btn py-2 px-1 font-medium text-gray-600" data-tab="stats">Статистика</button>
+                        <button class="tab-btn py-2 px-1 font-medium text-gray-600" data-tab="notes">Заметки</button>
+                        <button class="tab-btn py-2 px-1 font-medium text-gray-600" data-tab="notifications">Уведомления</button>
+                    </div>
+                    <div id="tabContent">
+                        <!-- dynamic -->
+                    </div>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-4 h-fit">
+                    <h3 class="font-bold text-lg mb-3">📊 Быстрая сводка</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span>Всего заказов:</span><span class="font-bold">${totalOrders}</span></div>
+                        <div class="flex justify-between"><span>Завершено:</span><span class="font-bold">${completed}</span></div>
+                        <div class="flex justify-between"><span>В работе:</span><span class="font-bold">${inWork}</span></div>
+                        <div class="flex justify-between"><span>Общая сумма:</span><span class="font-bold">${totalSum.toLocaleString()} ₽</span></div>
+                        <div class="flex justify-between"><span>Средний чек:</span><span class="font-bold">${avgCheck.toLocaleString()} ₽</span></div>
+                        <div class="flex justify-between"><span>Последний заказ:</span><span class="font-bold">${lastOrder ? lastOrder.date + " (" + statusNames[lastOrder.status] + ")" : "—"}</span></div>
+                        <hr class="my-2">
+                        <div><i class="fas fa-lightbulb text-yellow-500 mr-1"></i> Рекомендация: ${lastOrder && lastOrder.status === "ready" ? "Заказ готов, напомнить клиенту" : client.orders.length >= 3 ? "Предложить абонемент на обслуживание" : "Пригласить на профилактику"}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById("clientCardContent").innerHTML = content;
+        // Fill tabs content
+        function renderTab(tabId) {
+          const container = document.getElementById("tabContent");
+          if (tabId === "info") {
+            container.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="block text-gray-500 text-sm">Тип клиента</label><p class="font-medium">${client.name.includes("ООО") ? "Организация" : "Частное лицо"}</p></div>
+                        <div><label class="block text-gray-500 text-sm">Телефон</label><p class="font-medium">${client.phone}</p></div>
+                        <div><label class="block text-gray-500 text-sm">Email</label><p class="font-medium">${client.email || "—"}</p></div>
+                        <div><label class="block text-gray-500 text-sm">Дата регистрации</label><p class="font-medium">${client.firstContact}</p></div>
+                        <div class="col-span-2"><label class="block text-gray-500 text-sm">Комментарий</label><p class="font-medium">Клиент предпочитает быстрый ремонт, всегда звонит перед приездом.</p></div>
+                        <div class="col-span-2"><button id="editClientInfoBtn" class="text-blue-600 text-sm border rounded-full px-4 py-1"><i class="fas fa-edit"></i> Редактировать</button></div>
+                    </div>
+                `;
+            document
+              .getElementById("editClientInfoBtn")
+              ?.addEventListener("click", () =>
+                alert("Демо-режим: редактирование клиента"),
+              );
+          } else if (tabId === "orders") {
+            container.innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50"><tr><th>№</th><th>Дата</th><th>Устройство</th><th>Неисправность</th><th>Статус</th><th>Стоимость</th><th></th></tr></thead>
+                            <tbody>${ordersHtml}</tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4"><button id="newOrderFromCard" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm"><i class="fas fa-plus"></i> Создать заказ</button></div>
+                `;
+            document
+              .getElementById("newOrderFromCard")
+              ?.addEventListener("click", () =>
+                alert(`Демо: создание заказа для ${client.name}`),
+              );
+            document.querySelectorAll(".repeat-order").forEach((btn) => {
+              btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                alert(`Демо: повтор заказа ${btn.dataset.orderId}`);
+              });
+            });
+          } else if (tabId === "stats") {
+            container.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-xl"><h4 class="font-bold mb-2">Топ устройств</h4><p>${topDevices}</p></div>
+                        <div class="bg-gray-50 p-4 rounded-xl"><h4 class="font-bold mb-2">Частая неисправность</h4><p>${topIssue ? topIssue[0] + " (" + topIssue[1] + " раз)" : "—"}</p></div>
+                        <div class="bg-gray-50 p-4 rounded-xl"><h4 class="font-bold mb-2">Обращения по месяцам</h4><p>График: последние 3 месяца — активность ${client.orders.length} заказов</p></div>
+                        <div class="bg-gray-50 p-4 rounded-xl"><h4 class="font-bold mb-2">Среднее время выполнения</h4><p>${client.orders.filter((o) => o.status === "completed").length ? "2.5 дня" : "—"}</p></div>
+                    </div>
+                `;
+          } else if (tabId === "notes") {
+            container.innerHTML = `
+                    <div class="space-y-3 max-h-60 overflow-y-auto">
+                        ${notes.map((n) => `<div class="border-l-4 border-blue-300 pl-3 py-1"><div class="text-xs text-gray-500">${n.date} — ${n.author}</div><div>${n.text}</div></div>`).join("")}
+                    </div>
+                    <div class="mt-4"><textarea id="newNote" rows="2" class="w-full border rounded-xl p-2" placeholder="Новая заметка..."></textarea><button id="addNoteBtn" class="mt-2 bg-gray-100 px-4 py-2 rounded-full text-sm">Добавить</button></div>
+                `;
+            document
+              .getElementById("addNoteBtn")
+              ?.addEventListener("click", () =>
+                alert(`Демо: заметка добавлена`),
+              );
+          } else if (tabId === "notifications") {
+            container.innerHTML = `
+                    <div class="space-y-3 max-h-60 overflow-y-auto">
+                        ${notifications.map((n) => `<div class="flex justify-between border-b pb-2"><div><i class="fas fa-envelope text-gray-400 mr-2"></i>${n.text}</div><div class="text-xs text-green-600">${n.status}</div><div class="text-xs text-gray-400">${n.date}</div></div>`).join("")}
+                    </div>
+                    <div class="mt-4"><button id="sendSmsBtn" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm"><i class="fas fa-paper-plane"></i> Отправить SMS</button></div>
+                `;
+            document
+              .getElementById("sendSmsBtn")
+              ?.addEventListener("click", () =>
+                alert(`Демо: отправка SMS клиенту ${client.phone}`),
+              );
+          }
+          // activate tab style
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((btn) =>
+              btn.classList.remove("tab-active", "text-blue-600"),
+            );
+          document
+            .querySelector(`.tab-btn[data-tab="${tabId}"]`)
+            .classList.add("tab-active", "text-blue-600");
+        }
+        // init first tab
+        renderTab("info");
+        // attach tab listeners
+        document.querySelectorAll(".tab-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            renderTab(btn.dataset.tab);
+          });
+        });
+        document.getElementById("clientCardModal").classList.remove("hidden");
+        document.getElementById("clientCardModal").classList.add("flex");
+      }
+
+      function closeClientCard() {
+        document.getElementById("clientCardModal").classList.add("hidden");
+        document.getElementById("clientCardModal").classList.remove("flex");
+      }
+
+      function openNewClientModal() {
+        document.getElementById("newClientModal").classList.remove("hidden");
+        document.getElementById("newClientModal").classList.add("flex");
+      }
+      function closeNewClientModal() {
+        document.getElementById("newClientModal").classList.add("hidden");
+        document.getElementById("newClientModal").classList.remove("flex");
+      }
+
+      // Event handlers
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        currentFilter.search = e.target.value;
+        currentPage = 1;
+        renderTable();
+      });
+      document.getElementById("tagFilter").addEventListener("change", (e) => {
+        currentFilter.tag = e.target.value;
+        currentPage = 1;
+        renderTable();
+      });
+      document
+        .getElementById("resetFiltersBtn")
+        .addEventListener("click", () => {
+          document.getElementById("searchInput").value = "";
+          document.getElementById("tagFilter").value = "all";
+          currentFilter = { search: "", tag: "all" };
+          currentPage = 1;
+          renderTable();
+        });
+      document
+        .getElementById("newClientBtn")
+        .addEventListener("click", openNewClientModal);
+      document
+        .getElementById("newClientForm")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          const name = document.getElementById("clientName").value;
+          const phone = document.getElementById("clientPhone").value;
+          const email = document.getElementById("clientEmail").value;
+          const tagsStr = document.getElementById("clientTags").value;
+          const tags = tagsStr
+            .split(",")
+            .map((t) => t.trim())
+            .filter((t) => t);
+          const newId = clients.length + 1;
+          clients.push({
+            id: newId,
+            name,
+            phone,
+            email,
+            firstContact: new Date().toISOString().slice(0, 10),
+            tags,
+            orders: [],
+          });
+          closeNewClientModal();
+          renderTable();
+          alert("Клиент добавлен (демо)");
+        });
+      document
+        .getElementById("exportBtn")
+        .addEventListener("click", () => alert("Экспорт XLSX (демо)"));
+      // Delegate events
+      document
+        .getElementById("clientsTableBody")
+        .addEventListener("click", (e) => {
+          const row = e.target.closest(".clickable-row");
+          if (
+            row &&
+            !e.target.closest(".view-client") &&
+            !e.target.closest(".create-order-from-client")
+          ) {
+            const clientId = row.dataset.clientId;
+            openClientCard(clientId);
+          }
+          if (e.target.closest(".view-client")) {
+            const btn = e.target.closest(".view-client");
+            openClientCard(btn.dataset.id);
+          }
+          if (e.target.closest(".create-order-from-client")) {
+            const btn = e.target.closest(".create-order-from-client");
+            alert(`Демо: создание заказа для клиента ID ${btn.dataset.id}`);
+          }
+        });
+
+      renderTable();
+    </script>
+  </body>
+</html>

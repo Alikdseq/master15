@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мастер Принт · Система учета заказов</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background: #f4f7fb;
+        color: #1e293b;
+        padding: 30px 20px;
+      }
+      .card {
+        background: white;
+        border-radius: 28px;
+        padding: 24px;
+        box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 1px solid #e9eef3;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 45px -10px rgba(0, 0, 0, 0.15);
+      }
+      .badge-status {
+        background: #dbeafe;
+        color: #1e4f8a;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 30px;
+        font-size: 12px;
+      }
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .table-header {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #475569;
+      }
+      .whatsapp-bubble {
+        background: #e5f5e5;
+        border-radius: 18px 18px 18px 4px;
+        padding: 12px 16px;
+        max-width: 80%;
+        border-left: 4px solid #25d366;
+      }
+      .accent-blue {
+        color: #2563eb;
+      }
+      .accent-green {
+        color: #16a34a;
+      }
+      .gradient-bg {
+        background: linear-gradient(145deg, #ffffff, #f9fcff);
+      }
+      .step-number {
+        width: 40px;
+        height: 40px;
+        background: #2563eb;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin-right: 15px;
+        flex-shrink: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div
+        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12"
+      >
+        <div class="flex items-center gap-4">
+          <div
+            class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-xl"
+          >
+            <i class="fas fa-print text-white text-3xl"></i>
+          </div>
+          <div>
+            <h1 class="text-4xl font-bold text-gray-900">Мастер Принт</h1>
+            <p class="text-gray-600 text-lg">
+              Цифровая система учета заказов и клиентов
+            </p>
+          </div>
+        </div>
+        <div
+          class="mt-6 md:mt-0 flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-sm"
+        >
+          <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+          <span class="text-sm font-medium">Рабочее место администратора</span>
+        </div>
+      </div>
+
+      <!-- Проблемы (коротко) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+        <div class="card border-l-4 border-l-red-400">
+          <div class="flex items-center mb-3">
+            <i class="fas fa-clipboard-list text-red-500 text-2xl mr-3"></i>
+            <h3 class="font-bold text-lg">Бумажки теряются</h3>
+          </div>
+          <p class="text-gray-600">
+            Заказы записываются вручную, потом не найти.
+          </p>
+        </div>
+        <div class="card border-l-4 border-l-red-400">
+          <div class="flex items-center mb-3">
+            <i class="fas fa-search text-red-500 text-2xl mr-3"></i>
+            <h3 class="font-bold text-lg">Поиск по 10 минут</h3>
+          </div>
+          <p class="text-gray-600">
+            На каждый звонок клиента — перерывание бумажек.
+          </p>
+        </div>
+        <div class="card border-l-4 border-l-red-400">
+          <div class="flex items-center mb-3">
+            <i class="fas fa-user-slash text-red-500 text-2xl mr-3"></i>
+            <h3 class="font-bold text-lg">Потеря клиентов</h3>
+          </div>
+          <p class="text-gray-600">Мелкие клиенты уходят навсегда, нет базы.</p>
+        </div>
+      </div>
+
+      <!-- Основные решения -->
+      <h2 class="text-3xl font-bold mb-8 flex items-center">
+        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+        Что мы предлагаем
+      </h2>
+
+      <!-- Решение 1: Электронный журнал (карточка заказа) -->
+      <div class="card mb-10">
+        <div class="flex items-center mb-6">
+          <div class="step-number">1</div>
+          <h3 class="text-2xl font-bold">Электронный журнал заказов</h3>
+        </div>
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Пример карточки заказа -->
+          <div class="bg-gray-50 rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-4">
+              <span class="badge-status">Принят 10.03.2026</span>
+              <span class="text-sm text-gray-500">№ Z-1245</span>
+            </div>
+            <div class="space-y-3">
+              <div><span class="font-medium">Клиент:</span> Иванов Петр</div>
+              <div>
+                <span class="font-medium">Телефон:</span> +7 918 123-45-67
+              </div>
+              <div>
+                <span class="font-medium">Устройство:</span> Принтер HP LaserJet
+                1018
+              </div>
+              <div>
+                <span class="font-medium">Неисправность:</span> Не печатает,
+                мигает лампочка
+              </div>
+              <div>
+                <span class="font-medium">Комплектация:</span> Кабель питания
+                есть, картридж внутри
+              </div>
+              <div>
+                <span class="font-medium">Статус:</span>
+                <span
+                  class="ml-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm"
+                  >В ремонте</span
+                >
+              </div>
+            </div>
+          </div>
+          <!-- Преимущества -->
+          <div class="space-y-4">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-bolt text-blue-500 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Мгновенный поиск</span>
+                <p class="text-gray-600">
+                  По номеру телефона или фамилии — вся история за секунду.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i class="fas fa-database text-blue-500 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Ничего не теряется</span>
+                <p class="text-gray-600">
+                  Даже если администратор уволился — все заказы на месте.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i class="fas fa-tasks text-blue-500 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Статусы заказов</span>
+                <p class="text-gray-600">
+                  Всегда понятно, на каком этапе каждый заказ.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Решение 2: Автоматические оповещения (WhatsApp) -->
+      <div class="card mb-10">
+        <div class="flex items-center mb-6">
+          <div class="step-number">2</div>
+          <h3 class="text-2xl font-bold">
+            Автоматические оповещения в WhatsApp
+          </h3>
+        </div>
+        <div class="grid md:grid-cols-2 gap-8">
+          <div class="whatsapp-bubble">
+            <div class="flex items-center mb-2">
+              <i class="fab fa-whatsapp text-green-600 text-2xl mr-2"></i>
+              <span class="font-bold text-gray-800">Мастер Принт</span>
+            </div>
+            <p class="text-gray-800">
+              Иванов Петр, ваш принтер HP отремонтирован и ждет вас в Мастер
+              Принт на Кесаева, 18. Режим работы: пн-пт 9:00-19:00, сб
+              10:00-16:00. Ждем!
+            </p>
+            <p class="text-xs text-gray-500 mt-2">
+              Автосообщение • 11.03.2026 14:30
+            </p>
+          </div>
+          <div class="space-y-4">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-clock text-green-600 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Освобождает администратора</span>
+                <p class="text-gray-600">
+                  Не нужно обзванивать каждого клиента — система отправляет
+                  сама.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i class="fas fa-bell text-green-600 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Клиенты приходят быстрее</span>
+                <p class="text-gray-600">
+                  Напоминания работают, готовые заказы не залеживаются.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i class="fas fa-redo-alt text-green-600 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Повторное напоминание</span>
+                <p class="text-gray-600">
+                  Через 3 дня еще одно сообщение, если клиент не пришел.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Решение 3: База клиентов и повторные продажи -->
+      <div class="card mb-10">
+        <div class="flex items-center mb-6">
+          <div class="step-number">3</div>
+          <h3 class="text-2xl font-bold">База клиентов и повторные продажи</h3>
+        </div>
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Пример списка клиентов -->
+          <div class="bg-gray-50 rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-bold">Недавние клиенты</h4>
+              <span
+                class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full"
+                >156 контактов</span
+              >
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center border-b pb-2">
+                <div>
+                  <p class="font-medium">Иванов Петр</p>
+                  <p class="text-sm text-gray-500">+7 918 123-45-67</p>
+                </div>
+                <span
+                  class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded"
+                  >ремонт HP</span
+                >
+              </div>
+              <div class="flex justify-between items-center border-b pb-2">
+                <div>
+                  <p class="font-medium">Сидорова Анна</p>
+                  <p class="text-sm text-gray-500">+7 928 987-65-43</p>
+                </div>
+                <span
+                  class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded"
+                  >ксерокопии</span
+                >
+              </div>
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="font-medium">ООО "Ромашка"</p>
+                  <p class="text-sm text-gray-500">+7 903 111-22-33</p>
+                </div>
+                <span
+                  class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded"
+                  >картриджи</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-user-plus text-indigo-600 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Сбор даже с мелких услуг</span>
+                <p class="text-gray-600">
+                  При ксерокопии просим телефон — клиент попадает в базу.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i
+                class="fas fa-envelope-open-text text-indigo-600 text-xl mt-1"
+              ></i>
+              <div>
+                <span class="font-bold">Рассылки по сегментам</span>
+                <p class="text-gray-600">
+                  Например, всем, кто печатал фото — скидка 20% на печать.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i class="fas fa-chart-line text-indigo-600 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Повторные продажи</span>
+                <p class="text-gray-600">
+                  Система подскажет, кому через 3 месяца предложить заправку.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Решение 4: Учет расходников и запчастей -->
+      <div class="card mb-10">
+        <div class="flex items-center mb-6">
+          <div class="step-number">4</div>
+          <h3 class="text-2xl font-bold">Учет расходников и запчастей</h3>
+        </div>
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Таблица остатков -->
+          <div class="bg-gray-50 rounded-2xl p-5">
+            <table class="w-full text-sm">
+              <thead class="table-header">
+                <tr>
+                  <th class="py-2 text-left">Наименование</th>
+                  <th class="py-2 text-left">Остаток</th>
+                  <th class="py-2 text-left">Порог</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="py-2">Картридж HP 1018</td>
+                  <td class="py-2">3 шт</td>
+                  <td class="py-2 text-orange-600">5</td>
+                </tr>
+                <tr>
+                  <td class="py-2">Тонер Samsung 1610</td>
+                  <td class="py-2">8 шт</td>
+                  <td class="py-2 text-green-600">10</td>
+                </tr>
+                <tr>
+                  <td class="py-2">Ролик подачи бумаги</td>
+                  <td class="py-2">1 шт</td>
+                  <td class="py-2 text-red-600">2</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="space-y-4">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-cubes text-amber-600 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Всегда в наличии</span>
+                <p class="text-gray-600">
+                  Система предупредит, когда остатки на минимуме.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i class="fas fa-ban text-amber-600 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Нет лишних закупок</span>
+                <p class="text-gray-600">Только то, что действительно нужно.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i class="fas fa-chart-pie text-amber-600 text-xl mt-1"></i>
+              <div>
+                <span class="font-bold">Прозрачность расходов</span>
+                <p class="text-gray-600">Аналитика, на что уходят деньги.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Решение 5: Статусная линейка -->
+      <div class="card mb-10">
+        <div class="flex items-center mb-6">
+          <div class="step-number">5</div>
+          <h3 class="text-2xl font-bold">Статусная линейка заказов</h3>
+        </div>
+        <div class="grid md:grid-cols-2 gap-8">
+          <div>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-3 py-1 bg-gray-200 rounded-full text-sm"
+                >Принят</span
+              >
+              <span class="px-3 py-1 bg-blue-200 rounded-full text-sm"
+                >Диагностика</span
+              >
+              <span class="px-3 py-1 bg-yellow-200 rounded-full text-sm"
+                >Согласование</span
+              >
+              <span class="px-3 py-1 bg-orange-200 rounded-full text-sm"
+                >Ожидание запчастей</span
+              >
+              <span class="px-3 py-1 bg-purple-200 rounded-full text-sm"
+                >В ремонте</span
+              >
+              <span class="px-3 py-1 bg-green-200 rounded-full text-sm"
+                >Готов</span
+              >
+              <span
+                class="px-3 py-1 bg-gray-400 text-white rounded-full text-sm"
+                >Выдан</span
+              >
+            </div>
+            <p class="text-gray-600">
+              Каждый заказ движется по этим этапам, вы всегда видите, что
+              происходит.
+            </p>
+          </div>
+          <div class="bg-gray-50 rounded-2xl p-5">
+            <div class="flex justify-between mb-2">
+              <span class="font-medium">Заказы в работе:</span>
+              <span class="bg-blue-100 px-3 py-1 rounded-full">8</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="font-medium">Ожидают запчасти:</span>
+              <span class="bg-orange-100 px-3 py-1 rounded-full">3</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="font-medium">Готовы к выдаче:</span>
+              <span class="bg-green-100 px-3 py-1 rounded-full">5</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Схема работы -->
+      <h2 class="text-3xl font-bold mb-8 mt-16 flex items-center">
+        <i class="fas fa-cogs text-gray-700 mr-3"></i>
+        Как это работает вместе
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <div class="card text-center">
+          <div
+            class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fas fa-user-plus text-blue-600 text-2xl"></i>
+          </div>
+          <h4 class="font-bold mb-2">1. Прием заказа</h4>
+          <p class="text-gray-500 text-sm">
+            Администратор заносит клиента и устройство в систему (2 минуты).
+          </p>
+        </div>
+        <div class="card text-center">
+          <div
+            class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fas fa-sync-alt text-blue-600 text-2xl"></i>
+          </div>
+          <h4 class="font-bold mb-2">2. Изменение статуса</h4>
+          <p class="text-gray-500 text-sm">
+            Мастер меняет статус по мере работы: диагностика, ремонт, готов.
+          </p>
+        </div>
+        <div class="card text-center">
+          <div
+            class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fab fa-whatsapp text-blue-600 text-2xl"></i>
+          </div>
+          <h4 class="font-bold mb-2">3. Автоуведомление</h4>
+          <p class="text-gray-500 text-sm">
+            При статусе «Готов» клиенту приходит сообщение в WhatsApp.
+          </p>
+        </div>
+        <div class="card text-center">
+          <div
+            class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fas fa-database text-blue-600 text-2xl"></i>
+          </div>
+          <h4 class="font-bold mb-2">4. Клиент в базе</h4>
+          <p class="text-gray-500 text-sm">
+            Данные сохраняются для повторных продаж и аналитики.
+          </p>
+        </div>
+      </div>
+
+      <!-- Этапы внедрения -->
+      <h2 class="text-3xl font-bold mb-8 flex items-center">
+        <i class="fas fa-rocket text-gray-700 mr-3"></i>
+        Этапы внедрения
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="card border-t-4 border-t-blue-500">
+          <div class="flex items-center mb-4">
+            <span class="text-3xl font-bold text-blue-500 mr-4">1</span>
+            <span class="font-bold text-xl">Простой старт</span>
+          </div>
+          <p class="text-gray-600 mb-3">2-3 дня</p>
+          <ul class="text-sm space-y-2 text-gray-600">
+            <li>
+              <i class="fas fa-check text-green-500 mr-2"></i>Установка базовой
+              системы учета
+            </li>
+            <li>
+              <i class="fas fa-check text-green-500 mr-2"></i>Обучение
+              администратора
+            </li>
+          </ul>
+        </div>
+        <div class="card border-t-4 border-t-green-500">
+          <div class="flex items-center mb-4">
+            <span class="text-3xl font-bold text-green-500 mr-4">2</span>
+            <span class="font-bold text-xl">Автоматизация</span>
+          </div>
+          <p class="text-gray-600 mb-3">2-3 дня</p>
+          <ul class="text-sm space-y-2 text-gray-600">
+            <li>
+              <i class="fas fa-check text-green-500 mr-2"></i>Настройка
+              WhatsApp-уведомлений
+            </li>
+            <li>
+              <i class="fas fa-check text-green-500 mr-2"></i>Тестирование на
+              первых заказах
+            </li>
+          </ul>
+        </div>
+        <div class="card border-t-4 border-t-purple-500">
+          <div class="flex items-center mb-4">
+            <span class="text-3xl font-bold text-purple-500 mr-4">3</span>
+            <span class="font-bold text-xl">Расширение</span>
+          </div>
+          <p class="text-gray-600 mb-3">3-5 дней</p>
+          <ul class="text-sm space-y-2 text-gray-600">
+            <li>
+              <i class="fas fa-check text-green-500 mr-2"></i>Учет расходников и
+              запчастей
+            </li>
+            <li>
+              <i class="fas fa-check text-green-500 mr-2"></i>Сбор контактов от
+              копировальных услуг
+            </li>
+            <li>
+              <i class="fas fa-check text-green-500 mr-2"></i>Отчеты для
+              руководителя
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Призыв -->
+      <div
+        class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-3xl p-10 text-white text-center shadow-2xl"
+      >
+        <h3 class="text-4xl font-bold mb-4">Готовы навести порядок?</h3>
+        <p class="text-xl mb-8 opacity-90">
+          Перестаньте терять заказы и клиентов. Начните с любого этапа.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-6">
+          <button
+            class="px-10 py-5 bg-white text-blue-700 font-bold rounded-2xl text-xl hover:shadow-2xl transition shadow-lg"
+          >
+            <i class="fab fa-whatsapp mr-3"></i>Написать в WhatsApp
+          </button>
+          <button
+            class="px-10 py-5 border-2 border-white text-white font-bold rounded-2xl text-xl hover:bg-white hover:text-blue-700 transition"
+          >
+            <i class="fas fa-phone-alt mr-3"></i>Заказать звонок
+          </button>
+        </div>
+      </div>
+
+      <footer class="text-center text-gray-500 text-sm mt-12">
+        Мастер Принт · Цифровая система учета · Разработчик: Алихан
+      </footer>
+    </div>
+  </body>
+</html>

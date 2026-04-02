@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мастер Принт · Схема работы</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body class="max-w-5xl mx-auto p-6 bg-gray-50">
+    <div class="flex items-center gap-3 mb-8">
+      <i class="fas fa-cogs text-gray-700 text-3xl"></i>
+      <h1 class="text-3xl font-bold">Как это работает</h1>
+    </div>
+
+    <div class="grid md:grid-cols-4 gap-6">
+      <div
+        class="step-card bg-white p-6 rounded-2xl text-center shadow-lg cursor-pointer"
+        onclick="highlightStep(1)"
+      >
+        <div
+          class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="fas fa-user-plus text-blue-600 text-2xl"></i>
+        </div>
+        <h3 class="font-bold text-lg mb-2">1. Приём заказа</h3>
+        <p class="text-sm text-gray-600">
+          Администратор заносит клиента и устройство в систему (2 минуты).
+        </p>
+      </div>
+      <div
+        class="step-card bg-white p-6 rounded-2xl text-center shadow-lg cursor-pointer"
+        onclick="highlightStep(2)"
+      >
+        <div
+          class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="fas fa-sync-alt text-blue-600 text-2xl"></i>
+        </div>
+        <h3 class="font-bold text-lg mb-2">2. Изменение статуса</h3>
+        <p class="text-sm text-gray-600">
+          Мастер меняет статус по мере работы.
+        </p>
+      </div>
+      <div
+        class="step-card bg-white p-6 rounded-2xl text-center shadow-lg cursor-pointer"
+        onclick="highlightStep(3)"
+      >
+        <div
+          class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="fab fa-whatsapp text-blue-600 text-2xl"></i>
+        </div>
+        <h3 class="font-bold text-lg mb-2">3. Автоуведомление</h3>
+        <p class="text-sm text-gray-600">
+          При статусе «Готов» клиенту приходит WhatsApp.
+        </p>
+      </div>
+      <div
+        class="step-card bg-white p-6 rounded-2xl text-center shadow-lg cursor-pointer"
+        onclick="highlightStep(4)"
+      >
+        <div
+          class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="fas fa-database text-blue-600 text-2xl"></i>
+        </div>
+        <h3 class="font-bold text-lg mb-2">4. Клиент в базе</h3>
+        <p class="text-sm text-gray-600">
+          Данные сохраняются для повторных продаж.
+        </p>
+      </div>
+    </div>
+
+    <div
+      class="mt-10 p-6 bg-white rounded-3xl text-center"
+      id="stepDescription"
+    >
+      Нажмите на любой шаг, чтобы увидеть подробности.
+    </div>
+
+    <script>
+      function highlightStep(step) {
+        const cards = document.querySelectorAll(".step-card");
+        cards.forEach((c) => c.classList.remove("ring-4", "ring-blue-300"));
+        cards[step - 1].classList.add("ring-4", "ring-blue-300");
+
+        const desc = document.getElementById("stepDescription");
+        const texts = [
+          "На этом этапе администратор быстро заполняет карточку заказа: имя, телефон, устройство, неисправность. Всё сохраняется в системе, бумажки не нужны.",
+          "Мастер отмечает, на какой стадии работа: диагностика, ремонт, ожидание запчастей. Статус виден всем.",
+          "Как только статус меняется на «Готов», система автоматически отправляет клиенту сообщение в WhatsApp. Никаких звонков.",
+          "Контакт клиента сохраняется в базе. Через 3 месяца можно напомнить о себе или предложить скидку.",
+        ];
+        desc.innerHTML = `<p class="text-lg">${texts[step - 1]}</p>`;
+      }
+    </script>
+  </body>
+</html>

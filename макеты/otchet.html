@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>Мастер Принт · Отчёты</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      body {
+        background: #f0f4f8;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      .tab-active {
+        border-bottom: 2px solid #2563eb;
+        color: #2563eb;
+      }
+      .card-stats {
+        transition: all 0.2s;
+      }
+      .card-stats:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+      }
+      @media (max-width: 768px) {
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .report-table th,
+        .report-table td {
+          padding: 8px 6px;
+          font-size: 0.75rem;
+        }
+      }
+    </style>
+  </head>
+  <body class="p-5 md:p-8">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+          <i class="fas fa-chart-line text-blue-600 mr-3"></i>Отчёты
+        </h1>
+        <div class="flex gap-3">
+          <button
+            id="exportBtn"
+            class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-5 rounded-full transition flex items-center gap-2"
+          >
+            <i class="fas fa-file-excel"></i> Экспорт
+          </button>
+          <button
+            id="printBtn"
+            class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-5 rounded-full transition flex items-center gap-2"
+          >
+            <i class="fas fa-print"></i> Печать
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 overflow-x-auto"
+      >
+        <div class="flex border-b min-w-max">
+          <button
+            class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="orders"
+          >
+            Отчёт по заказам
+          </button>
+          <button
+            class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="finance"
+          >
+            Финансовый отчёт
+          </button>
+          <button
+            class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="stock"
+          >
+            Складские отчёты
+          </button>
+          <button
+            class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="clients"
+          >
+            Клиентская аналитика
+          </button>
+          <button
+            class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="services"
+          >
+            Услуги / неисправности
+          </button>
+          <button
+            class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 transition"
+            data-tab="masters"
+          >
+            Загрузка мастеров
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters panel (common) -->
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6"
+      >
+        <div class="flex flex-wrap gap-4 items-end">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1"
+              >Период</label
+            >
+            <div class="flex gap-2">
+              <input
+                type="date"
+                id="dateFrom"
+                class="border border-gray-300 rounded-xl py-2 px-3 text-sm"
+                value="2026-03-01"
+              />
+              <span class="self-center">—</span>
+              <input
+                type="date"
+                id="dateTo"
+                class="border border-gray-300 rounded-xl py-2 px-3 text-sm"
+                value="2026-03-31"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1"
+              >Быстрый выбор</label
+            >
+            <select
+              id="quickPeriod"
+              class="border border-gray-300 rounded-xl py-2 px-3 text-sm bg-white"
+            >
+              <option value="custom">Произвольный</option>
+              <option value="today">Сегодня</option>
+              <option value="week">Эта неделя</option>
+              <option value="month">Этот месяц</option>
+              <option value="quarter">Этот квартал</option>
+            </select>
+          </div>
+          <div id="dynamicFilters" class="flex gap-3 flex-1">
+            <!-- dynamic filters per tab -->
+          </div>
+          <div>
+            <button
+              id="applyBtn"
+              class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 px-6 text-sm font-medium transition"
+            >
+              <i class="fas fa-chart-simple mr-1"></i> Сформировать
+            </button>
+            <button
+              id="resetFiltersBtn"
+              class="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl py-2 px-5 text-sm ml-2 transition"
+            >
+              <i class="fas fa-undo-alt mr-1"></i> Сбросить
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab content containers -->
+      <div id="ordersTab" class="tab-content">
+        <!-- filled dynamically -->
+      </div>
+      <div id="financeTab" class="tab-content hidden"></div>
+      <div id="stockTab" class="tab-content hidden"></div>
+      <div id="clientsTab" class="tab-content hidden"></div>
+      <div id="servicesTab" class="tab-content hidden"></div>
+      <div id="mastersTab" class="tab-content hidden"></div>
+    </div>
+
+    <script>
+      // Mock data for reports
+      const mockOrders = {
+        summary: {
+          total: 312,
+          completed: 287,
+          inProgress: 25,
+          revenue: 185400,
+          avgTime: 3.2,
+          avgCheck: 3240,
+        },
+        daily: [
+          { date: "2026-03-01", orders: 8, revenue: 12400 },
+          { date: "2026-03-02", orders: 10, revenue: 15200 },
+          { date: "2026-03-03", orders: 12, revenue: 18600 },
+          { date: "2026-03-04", orders: 14, revenue: 21000 },
+          { date: "2026-03-05", orders: 9, revenue: 13500 },
+          { date: "2026-03-06", orders: 11, revenue: 16800 },
+          { date: "2026-03-07", orders: 13, revenue: 19800 },
+          { date: "2026-03-08", orders: 15, revenue: 22500 },
+          { date: "2026-03-09", orders: 10, revenue: 15200 },
+          { date: "2026-03-10", orders: 12, revenue: 18400 },
+        ],
+        statuses: [
+          { label: "Принят", value: 18 },
+          { label: "Диагностика", value: 12 },
+          { label: "Согласование", value: 8 },
+          { label: "Ожидание запчастей", value: 14 },
+          { label: "В ремонте", value: 22 },
+          { label: "Готов", value: 19 },
+          { label: "Выдан", value: 7 },
+        ],
+        masters: [
+          {
+            name: "Петров А.",
+            orders: 45,
+            completed: 42,
+            avgDays: 2.1,
+            revenue: 48000,
+          },
+          {
+            name: "Сидоров М.",
+            orders: 38,
+            completed: 35,
+            avgDays: 2.5,
+            revenue: 42000,
+          },
+          {
+            name: "Кузнецов Д.",
+            orders: 32,
+            completed: 29,
+            avgDays: 2.8,
+            revenue: 35600,
+          },
+        ],
+        details: [
+          {
+            id: "2403-0012",
+            date: "2026-03-10",
+            client: "Иванов И.",
+            device: "HP 1018",
+            status: "Готов",
+            master: "Петров А.",
+            cost: 1800,
+          },
+          {
+            id: "2403-0015",
+            date: "2026-03-12",
+            client: "ООО Ромашка",
+            device: "Canon i-SENSYS",
+            status: "Согласование",
+            master: "Сидоров М.",
+            cost: null,
+          },
+          {
+            id: "2403-0020",
+            date: "2026-03-14",
+            client: "Петрова А.",
+            device: "Ноутбук Lenovo",
+            status: "Диагностика",
+            master: "Кузнецов Д.",
+            cost: null,
+          },
+        ],
+      };
+
+      const mockFinance = {
+        summary: {
+          income: 185400,
+          expenses: 82450,
+          profit: 102950,
+          margin: 55.5,
+        },
+        byOrder: [
+          { id: "2403-0012", revenue: 1800, cost: 720, profit: 1080 },
+          { id: "2403-0005", revenue: 800, cost: 350, profit: 450 },
+          { id: "2403-0040", revenue: 2500, cost: 1100, profit: 1400 },
+        ],
+        byProduct: [
+          {
+            name: "Картридж HP 85A",
+            qty: 12,
+            purchase: 14400,
+            sale: 21600,
+            margin: 7200,
+          },
+          {
+            name: "Тонер Canon 125",
+            qty: 8,
+            purchase: 6800,
+            sale: 9600,
+            margin: 2800,
+          },
+        ],
+      };
+
+      const mockStock = {
+        current: [
+          {
+            sku: "HP85",
+            name: "Картридж HP 85A",
+            category: "Картриджи",
+            stock: 2,
+            min: 5,
+          },
+          {
+            sku: "TNR1",
+            name: "Тонер Canon 125",
+            category: "Тонер",
+            stock: 12,
+            min: 3,
+          },
+          {
+            sku: "BUM1",
+            name: "Бумага А4 (5 пачек)",
+            category: "Бумага",
+            stock: 1,
+            min: 2,
+          },
+        ],
+        movements: [
+          {
+            date: "2026-03-15",
+            product: "HP85",
+            type: "Поступление",
+            qty: 5,
+            reason: "Поставка",
+          },
+          {
+            date: "2026-03-18",
+            product: "HP85",
+            type: "Списание",
+            qty: 3,
+            reason: "Заказ #2403-0012",
+          },
+        ],
+        lowStock: [
+          {
+            sku: "HP85",
+            name: "Картридж HP 85A",
+            stock: 2,
+            min: 5,
+            recommend: 6,
+          },
+          {
+            sku: "BUM1",
+            name: "Бумага А4 (5 пачек)",
+            stock: 1,
+            min: 2,
+            recommend: 3,
+          },
+        ],
+      };
+
+      const mockClients = {
+        total: 156,
+        new: 23,
+        active: 89,
+        returned: 47,
+        repeatRate: 0.43,
+        distribution: [
+          { tag: "VIP", count: 12 },
+          { tag: "Постоянный", count: 45 },
+          { tag: "Новые", count: 67 },
+          { tag: "Прочие", count: 32 },
+        ],
+        topBySum: [
+          { name: "Иванов Иван", orders: 8, total: 28450, avg: 3556 },
+          { name: "ООО Ромашка", orders: 5, total: 18700, avg: 3740 },
+        ],
+        topByFreq: [
+          { name: "Петрова Анна", orders: 6, total: 14200 },
+          { name: "Смирнов К.", orders: 4, total: 9800 },
+        ],
+      };
+
+      const mockServices = [
+        { name: "Не печатает / сбои печати", count: 45, share: 28.2 },
+        { name: "Заправка картриджа", count: 32, share: 20.1 },
+        { name: "Шум / скрежет", count: 18, share: 11.3 },
+        { name: "Не включается", count: 12, share: 7.5 },
+        { name: "Плохое качество печати", count: 8, share: 5.0 },
+      ];
+
+      const mockMasters = [
+        {
+          name: "Петров А.",
+          active: 5,
+          completed: 42,
+          avgDays: 2.1,
+          loadPercent: 85,
+        },
+        {
+          name: "Сидоров М.",
+          active: 4,
+          completed: 35,
+          avgDays: 2.5,
+          loadPercent: 70,
+        },
+        {
+          name: "Кузнецов Д.",
+          active: 6,
+          completed: 29,
+          avgDays: 2.8,
+          loadPercent: 78,
+        },
+      ];
+
+      let activeTab = "orders";
+      let ordersChart, statusChart;
+
+      // Helper to render number format
+      function formatMoney(amount) {
+        return amount ? amount.toLocaleString("ru-RU") + " ₽" : "—";
+      }
+
+      function renderOrdersTab() {
+        const container = document.getElementById("ordersTab");
+        const summary = mockOrders.summary;
+        const html = `
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border card-stats"><div class="text-gray-500 text-sm">Заказов</div><div class="text-2xl font-bold">${summary.total}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border card-stats"><div class="text-gray-500 text-sm">Завершено</div><div class="text-2xl font-bold text-green-600">${summary.completed}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border card-stats"><div class="text-gray-500 text-sm">В работе</div><div class="text-2xl font-bold text-orange-600">${summary.inProgress}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border card-stats"><div class="text-gray-500 text-sm">Выручка</div><div class="text-2xl font-bold text-blue-600">${formatMoney(summary.revenue)}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border card-stats"><div class="text-gray-500 text-sm">Средний чек</div><div class="text-2xl font-bold">${formatMoney(summary.avgCheck)}</div></div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><canvas id="ordersLineChart" height="200"></canvas><div class="text-center text-sm text-gray-500 mt-2">Динамика заказов</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><canvas id="statusPieChart" height="200"></canvas><div class="text-center text-sm text-gray-500 mt-2">Распределение по статусам</div></div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border p-4 mb-6">
+                <h3 class="font-bold text-lg mb-3">Эффективность мастеров</h3>
+                <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="p-2 text-left">Мастер</th><th class="p-2 text-left">Заказов</th><th class="p-2 text-left">Завершено</th><th class="p-2 text-left">Ср. время (дн)</th><th class="p-2 text-left">Выручка</th></tr></thead><tbody>${mockOrders.masters.map((m) => `<tr class="border-b"><td class="p-2">${m.name}</td><td class="p-2">${m.orders}</td><td class="p-2">${m.completed}</td><td class="p-2">${m.avgDays}</td><td class="p-2">${formatMoney(m.revenue)}</td></tr>`).join("")}</tbody></table></div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border p-4">
+                <div class="flex justify-between items-center mb-3"><h3 class="font-bold text-lg">Детальная таблица заказов</h3><button class="text-blue-600 text-sm" onclick="alert('Экспорт XLSX (демо)')"><i class="fas fa-download mr-1"></i> Экспорт</button></div>
+                <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="p-2">№</th><th class="p-2">Дата</th><th class="p-2">Клиент</th><th class="p-2">Устройство</th><th class="p-2">Статус</th><th class="p-2">Мастер</th><th class="p-2">Стоимость</th></tr></thead><tbody>${mockOrders.details.map((d) => `<tr class="border-b"><td class="p-2">${d.id}</td><td class="p-2">${d.date}</td><td class="p-2">${d.client}</td><td class="p-2">${d.device}</td><td class="p-2">${d.status}</td><td class="p-2">${d.master}</td><td class="p-2">${d.cost ? formatMoney(d.cost) : "—"}</td></tr>`).join("")}</tbody></table></div>
+            </div>
+        `;
+        container.innerHTML = html;
+        // charts
+        const ctxLine = document
+          .getElementById("ordersLineChart")
+          ?.getContext("2d");
+        if (ctxLine && ordersChart) ordersChart.destroy();
+        if (ctxLine) {
+          ordersChart = new Chart(ctxLine, {
+            type: "line",
+            data: {
+              labels: mockOrders.daily.map((d) => d.date.slice(5)),
+              datasets: [
+                {
+                  label: "Заказы",
+                  data: mockOrders.daily.map((d) => d.orders),
+                  borderColor: "#2563eb",
+                  tension: 0.3,
+                  fill: false,
+                },
+              ],
+            },
+            options: { responsive: true, maintainAspectRatio: true },
+          });
+        }
+        const ctxPie = document
+          .getElementById("statusPieChart")
+          ?.getContext("2d");
+        if (ctxPie && statusChart) statusChart.destroy();
+        if (ctxPie) {
+          statusChart = new Chart(ctxPie, {
+            type: "pie",
+            data: {
+              labels: mockOrders.statuses.map((s) => s.label),
+              datasets: [
+                {
+                  data: mockOrders.statuses.map((s) => s.value),
+                  backgroundColor: [
+                    "#3b82f6",
+                    "#8b5cf6",
+                    "#f59e0b",
+                    "#f97316",
+                    "#ec4899",
+                    "#10b981",
+                    "#6b7280",
+                  ],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { position: "bottom" } },
+            },
+          });
+        }
+      }
+
+      function renderFinanceTab() {
+        const container = document.getElementById("financeTab");
+        const fin = mockFinance;
+        const html = `
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><div class="text-gray-500 text-sm">Доходы</div><div class="text-2xl font-bold text-green-600">${formatMoney(fin.summary.income)}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><div class="text-gray-500 text-sm">Расходы</div><div class="text-2xl font-bold text-red-600">${formatMoney(fin.summary.expenses)}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><div class="text-gray-500 text-sm">Прибыль</div><div class="text-2xl font-bold text-blue-600">${formatMoney(fin.summary.profit)}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><div class="text-gray-500 text-sm">Рентабельность</div><div class="text-2xl font-bold">${fin.summary.margin}%</div></div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><canvas id="financeTrendChart" height="200"></canvas><div class="text-center text-sm">Динамика выручки и прибыли</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><h3 class="font-bold mb-2">Детализация по товарам</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Товар</th><th>Кол-во</th><th>Закупка</th><th>Продажа</th><th>Маржа</th></tr></thead><tbody>${fin.byProduct.map((p) => `<tr><td>${p.name}</td><td>${p.qty}</td><td>${formatMoney(p.purchase)}</td><td>${formatMoney(p.sale)}</td><td>${formatMoney(p.margin)}</td></tr>`).join("")}</tbody></table></div></div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border p-4"><h3 class="font-bold mb-2">Детализация по заказам</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Заказ</th><th>Выручка</th><th>Себестоимость</th><th>Прибыль</th></tr></thead><tbody>${fin.byOrder.map((o) => `<tr><td>${o.id}</td><td>${formatMoney(o.revenue)}</td><td>${formatMoney(o.cost)}</td><td>${formatMoney(o.profit)}</td></tr>`).join("")}</tbody></table></div></div>
+        `;
+        container.innerHTML = html;
+        const ctxTrend = document
+          .getElementById("financeTrendChart")
+          ?.getContext("2d");
+        if (ctxTrend)
+          new Chart(ctxTrend, {
+            type: "line",
+            data: {
+              labels: mockOrders.daily.map((d) => d.date.slice(5)),
+              datasets: [
+                {
+                  label: "Выручка (тыс.₽)",
+                  data: mockOrders.daily.map((d) => d.revenue / 1000),
+                  borderColor: "#10b981",
+                },
+              ],
+            },
+            options: { responsive: true },
+          });
+      }
+
+      function renderStockTab() {
+        const container = document.getElementById("stockTab");
+        const html = `
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><h3 class="font-bold mb-3">Текущие остатки</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Артикул</th><th>Наименование</th><th>Остаток</th><th>Мин.порог</th></tr></thead><tbody>${mockStock.current.map((p) => `<tr><td>${p.sku}</td><td>${p.name}</td><td class="${p.stock <= p.min ? "text-orange-600 font-bold" : ""}">${p.stock}</td><td>${p.min}</td></tr>`).join("")}</tbody></table></div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><h3 class="font-bold mb-3">Товары, требующие заказа</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Товар</th><th>Остаток</th><th>Рекомендуемый заказ</th></tr></thead><tbody>${mockStock.lowStock.map((p) => `<tr><td>${p.name}</td><td>${p.stock}</td><td>${p.recommend} шт.</td></tr>`).join("")}</tbody></table></div><button class="mt-3 text-blue-600 text-sm" onclick="alert('Сформировать заказ поставщику (XLSX)')"><i class="fas fa-truck"></i> Сформировать заказ</button></div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border p-4"><h3 class="font-bold mb-3">Движение товаров (последние операции)</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Дата</th><th>Товар</th><th>Тип</th><th>Кол-во</th><th>Причина</th></tr></thead><tbody>${mockStock.movements.map((m) => `<tr><td>${m.date}</td><td>${m.product}</td><td>${m.type}</td><td>${m.qty}</td><td>${m.reason}</td></tr>`).join("")}</tbody></table></div></div>
+        `;
+        container.innerHTML = html;
+      }
+
+      function renderClientsTab() {
+        const container = document.getElementById("clientsTab");
+        const cl = mockClients;
+        const html = `
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                <div class="bg-white rounded-2xl p-4 shadow-sm"><div class="text-gray-500">Всего клиентов</div><div class="text-2xl font-bold">${cl.total}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm"><div class="text-gray-500">Новые (за месяц)</div><div class="text-2xl font-bold text-green-600">${cl.new}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm"><div class="text-gray-500">Активные</div><div class="text-2xl font-bold">${cl.active}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm"><div class="text-gray-500">Вернувшиеся</div><div class="text-2xl font-bold">${cl.returned}</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm"><div class="text-gray-500">Повторяемость</div><div class="text-2xl font-bold">${Math.round(cl.repeatRate * 100)}%</div></div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><canvas id="tagsChart" height="200"></canvas><div class="text-center text-sm">Сегментация по тегам</div></div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border"><h3 class="font-bold mb-2">Топ-5 клиентов по сумме</h3><div class="space-y-2">${cl.topBySum.map((c) => `<div class="flex justify-between border-b pb-1"><span>${c.name}</span><span>${c.total} ₽ (${c.orders} заказов)</span></div>`).join("")}</div></div>
+            </div>
+        `;
+        container.innerHTML = html;
+        const ctxTags = document.getElementById("tagsChart")?.getContext("2d");
+        if (ctxTags)
+          new Chart(ctxTags, {
+            type: "pie",
+            data: {
+              labels: cl.distribution.map((t) => t.tag),
+              datasets: [
+                {
+                  data: cl.distribution.map((t) => t.count),
+                  backgroundColor: ["#f59e0b", "#3b82f6", "#10b981", "#8b5cf6"],
+                },
+              ],
+            },
+            options: { responsive: true },
+          });
+      }
+
+      function renderServicesTab() {
+        const container = document.getElementById("servicesTab");
+        const html = `
+            <div class="bg-white rounded-2xl shadow-sm border p-4 mb-6"><canvas id="servicesBarChart" height="250"></canvas></div>
+            <div class="bg-white rounded-2xl shadow-sm border p-4"><h3 class="font-bold mb-3">Детализация услуг</h3><div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Услуга / неисправность</th><th>Количество заказов</th><th>Доля</th></tr></thead><tbody>${mockServices.map((s) => `<tr class="border-b"><td class="p-2">${s.name}</td><td class="p-2">${s.count}</td><td class="p-2">${s.share}%</td></tr>`).join("")}</tbody></table></div></div>
+        `;
+        container.innerHTML = html;
+        const ctxBar = document
+          .getElementById("servicesBarChart")
+          ?.getContext("2d");
+        if (ctxBar)
+          new Chart(ctxBar, {
+            type: "bar",
+            data: {
+              labels: mockServices.map((s) => s.name.slice(0, 20)),
+              datasets: [
+                {
+                  label: "Количество заказов",
+                  data: mockServices.map((s) => s.count),
+                  backgroundColor: "#3b82f6",
+                },
+              ],
+            },
+            options: { responsive: true },
+          });
+      }
+
+      function renderMastersTab() {
+        const container = document.getElementById("mastersTab");
+        const html = `
+            <div class="bg-white rounded-2xl shadow-sm border p-4"><h3 class="font-bold mb-3">Загрузка мастеров (текущая)</h3><div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Мастер</th><th>Активных заказов</th><th>Завершено (мес)</th><th>Ср. время (дн)</th><th>Загрузка %</th></tr></thead><tbody>${mockMasters.map((m) => `<tr class="border-b"><td class="p-2">${m.name}</td><td class="p-2">${m.active}</td><td class="p-2">${m.completed}</td><td class="p-2">${m.avgDays}</td><td class="p-2"><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-600 rounded-full h-2" style="width: ${m.loadPercent}%"></div></div>${m.loadPercent}%</td></tr>`).join("")}</tbody></table></div></div>
+            <div class="mt-6 bg-white rounded-2xl shadow-sm border p-4"><canvas id="masterLoadChart" height="200"></canvas><div class="text-center text-sm">Загрузка по дням (Петров А.)</div></div>
+        `;
+        container.innerHTML = html;
+        const ctxLoad = document
+          .getElementById("masterLoadChart")
+          ?.getContext("2d");
+        if (ctxLoad)
+          new Chart(ctxLoad, {
+            type: "line",
+            data: {
+              labels: ["1", "2", "3", "4", "5", "6", "7"],
+              datasets: [
+                {
+                  label: "Заказов в работе",
+                  data: [4, 5, 4, 6, 7, 5, 4],
+                  borderColor: "#f97316",
+                },
+              ],
+            },
+            options: { responsive: true },
+          });
+      }
+
+      function switchTab(tabId) {
+        activeTab = tabId;
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((el) => el.classList.add("hidden"));
+        document.getElementById(`${tabId}Tab`).classList.remove("hidden");
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((btn) => btn.classList.remove("tab-active"));
+        document
+          .querySelector(`.tab-btn[data-tab="${tabId}"]`)
+          .classList.add("tab-active");
+
+        // render content on first open
+        if (tabId === "orders") renderOrdersTab();
+        else if (tabId === "finance") renderFinanceTab();
+        else if (tabId === "stock") renderStockTab();
+        else if (tabId === "clients") renderClientsTab();
+        else if (tabId === "services") renderServicesTab();
+        else if (tabId === "masters") renderMastersTab();
+      }
+
+      // Event listeners for filters (mock)
+      document.getElementById("applyBtn").addEventListener("click", () => {
+        alert("Демо-режим: отчёт сформирован с выбранными фильтрами");
+        switchTab(activeTab);
+      });
+      document
+        .getElementById("resetFiltersBtn")
+        .addEventListener("click", () => {
+          document.getElementById("dateFrom").value = "2026-03-01";
+          document.getElementById("dateTo").value = "2026-03-31";
+          document.getElementById("quickPeriod").value = "custom";
+          alert("Фильтры сброшены");
+          switchTab(activeTab);
+        });
+      document
+        .getElementById("exportBtn")
+        .addEventListener("click", () => alert("Экспорт XLSX (демо)"));
+      document
+        .getElementById("printBtn")
+        .addEventListener("click", () => window.print());
+
+      // quick period selection
+      document.getElementById("quickPeriod").addEventListener("change", (e) => {
+        const val = e.target.value;
+        const today = new Date();
+        if (val === "today") {
+          const d = today.toISOString().slice(0, 10);
+          document.getElementById("dateFrom").value = d;
+          document.getElementById("dateTo").value = d;
+        } else if (val === "week") {
+          const start = new Date(today);
+          start.setDate(today.getDate() - today.getDay() + 1);
+          document.getElementById("dateFrom").value = start
+            .toISOString()
+            .slice(0, 10);
+          const end = new Date(start);
+          end.setDate(start.getDate() + 6);
+          document.getElementById("dateTo").value = end
+            .toISOString()
+            .slice(0, 10);
+        } else if (val === "month") {
+          const start = new Date(today.getFullYear(), today.getMonth(), 1);
+          document.getElementById("dateFrom").value = start
+            .toISOString()
+            .slice(0, 10);
+          const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+          document.getElementById("dateTo").value = end
+            .toISOString()
+            .slice(0, 10);
+        } else if (val === "quarter") {
+          const quarterStart = new Date(
+            today.getFullYear(),
+            Math.floor(today.getMonth() / 3) * 3,
+            1,
+          );
+          document.getElementById("dateFrom").value = quarterStart
+            .toISOString()
+            .slice(0, 10);
+          const quarterEnd = new Date(
+            today.getFullYear(),
+            Math.floor(today.getMonth() / 3) * 3 + 3,
+            0,
+          );
+          document.getElementById("dateTo").value = quarterEnd
+            .toISOString()
+            .slice(0, 10);
+        }
+      });
+
+      // tab click handlers
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+      });
+
+      // initial load
+      switchTab("orders");
+    </script>
+  </body>
+</html>

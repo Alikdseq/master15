@@ -1,0 +1,178 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DJANGO_DEBUG: "0"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY}"
+      DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS}"
+      DJANGO_CORS_ALLOWED_ORIGINS: "${DJANGO_CORS_ALLOWED_ORIGINS}"
+      JWT_COOKIE_SECURE: "1"
+      POSTGRES_HOST: "postgres"
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYER: "redis"
+      REDIS_URL: "redis://redis:6379/1"
+      DJANGO_MEDIA_ROOT: "/app/media"
+      DJANGO_MEDIA_URL: "/media/"
+      SMS_PROVIDER: "${SMS_PROVIDER:-dummy}"
+      SMS_DRY_RUN: "${SMS_DRY_RUN:-1}"
+      PII_ENCRYPTION_KEY: "${PII_ENCRYPTION_KEY:-}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media:/app/media
+      - static:/app/staticfiles
+    command:
+      [
+        "sh",
+        "-c",
+        "python manage.py migrate && python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p 8000 config.asgi:application",
+      ]
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DJANGO_DEBUG: "0"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY}"
+      DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS}"
+      DJANGO_CORS_ALLOWED_ORIGINS: "${DJANGO_CORS_ALLOWED_ORIGINS}"
+      POSTGRES_HOST: "postgres"
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYER: "redis"
+      REDIS_URL: "redis://redis:6379/1"
+      DJANGO_MEDIA_ROOT: "/app/media"
+      DJANGO_MEDIA_URL: "/media/"
+      SMS_PROVIDER: "${SMS_PROVIDER:-dummy}"
+      SMS_DRY_RUN: "${SMS_DRY_RUN:-1}"
+      PII_ENCRYPTION_KEY: "${PII_ENCRYPTION_KEY:-}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media:/app/media
+    command: ["sh", "-c", "celery -A config worker -l INFO"]
+
+  beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DJANGO_DEBUG: "0"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY}"
+      DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS}"
+      DJANGO_CORS_ALLOWED_ORIGINS: "${DJANGO_CORS_ALLOWED_ORIGINS}"
+      POSTGRES_HOST: "postgres"
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYER: "redis"
+      REDIS_URL: "redis://redis:6379/1"
+      DJANGO_MEDIA_ROOT: "/app/media"
+      DJANGO_MEDIA_URL: "/media/"
+      SMS_PROVIDER: "${SMS_PROVIDER:-dummy}"
+      SMS_DRY_RUN: "${SMS_DRY_RUN:-1}"
+      PII_ENCRYPTION_KEY: "${PII_ENCRYPTION_KEY:-}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media:/app/media
+    command: ["sh", "-c", "celery -A config beat -l INFO"]
+
+  frontend:
+    image: node:22-slim
+    restart: "no"
+    working_dir: /app
+    environment:
+      VITE_API_BASE_URL: "${VITE_API_BASE_URL}"
+    volumes:
+      - ./frontend:/app
+      - frontend_dist:/app/dist
+    command: ["sh", "-c", "npm ci --no-audit --no-fund && npm run build"]
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    volumes:
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - frontend_dist:/usr/share/nginx/html:ro
+      - static:/srv/static:ro
+      - media:/srv/media:ro
+      - letsencrypt:/etc/letsencrypt
+      - certbot_webroot:/var/www/certbot
+
+  certbot:
+    image: certbot/certbot:latest
+    restart: "no"
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot_webroot:/var/www/certbot
+    entrypoint: ["sh", "-c", "echo 'certbot container is meant to be run manually' && exit 0"]
+
+volumes:
+  pgdata:
+  redisdata:
+  static:
+  media:
+  frontend_dist:
+  letsencrypt:
+  certbot_webroot:
+
