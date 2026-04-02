@@ -305,6 +305,8 @@ docker compose -f docker-compose.prod.yml logs -n 200 beat
 
 **Симптом:** `curl -H "Host: crm..." http://127.0.0.1/` с сервера даёт **200**, а `curl http://crm.../` с вашего ПК — **403**. Часто панель держит отдельный `listen ПУБЛИЧНЫЙ_IP:80 default_server`. Добавьте в `server` для CRM строку `listen ПУБЛИЧНЫЙ_IP:80;` (см. комментарий в `deploy/host-nginx-reverse-proxy.example.conf`) или уберите конфликт в конфиге панели.
 
+**Симптом:** главная открывается, **`/api/` даёт 502** после пересборки `backend`. Nginx в контейнере закэшировал старый IP сервиса `backend`. В `deploy/nginx/conf.d/crm.master15.ru.conf` включены `resolver 127.0.0.11` и `proxy_pass` через переменную; либо после смены backend выполняйте `docker compose ... restart nginx`.
+
 ---
 
 ## 11) Резервные копии (минимум)
