@@ -4,6 +4,13 @@ from django.db import models
 from django.utils import timezone
 
 
+def _drop_unicode_surrogates(value: str) -> str:
+    """Убирает суррогаты U+D800–U+DFFF (psycopg не может записать их в UTF-8)."""
+    if not value:
+        return value
+    return "".join(c for c in value if not (0xD800 <= ord(c) <= 0xDFFF))
+
+
 class UserManager(BaseUserManager):
     def create_user(self, email: str, password: str | None = None, **extra_fields):
         if not email:
@@ -48,6 +55,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
+
+    def save(self, *args, **kwargs):
+        self.name = _drop_unicode_surrogates(self.name)
+        self.email = _drop_unicode_surrogates(self.email)
+        self.phone = _drop_unicode_surrogates(self.phone)
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.email} ({self.get_role_display()})"
